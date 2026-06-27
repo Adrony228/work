@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Вариант 2 — бланк письменного экзамена</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 20mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.35;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 12mm 14mm;
+      background: #fff;
+    }
+
+    h1 {
+      font-size: 13pt;
+      text-align: center;
+      margin: 0 0 4mm;
+      font-weight: bold;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 11pt;
+      margin-bottom: 6mm;
+    }
+
+    .meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6mm 0 8mm;
+      font-size: 11pt;
+    }
+
+    .meta td {
+      border: 1px solid #000;
+      padding: 3mm 4mm;
+      vertical-align: bottom;
+    }
+
+    .meta .label {
+      width: 28%;
+      font-weight: bold;
+      background: #f7f7f7;
+    }
+
+    .meta .field {
+      min-height: 8mm;
+    }
+
+    .note {
+      font-size: 10.5pt;
+      margin-bottom: 6mm;
+      text-align: center;
+    }
+
+    .task {
+      margin-bottom: 7mm;
+      page-break-inside: avoid;
+    }
+
+    .task-title {
+      font-weight: bold;
+      margin-bottom: 2mm;
+    }
+
+    .task p {
+      margin: 2mm 0;
+    }
+
+    .formula {
+      margin: 3mm 0 4mm;
+      text-align: center;
+      font-size: 12.5pt;
+    }
+
+    .answer-box {
+      border: 1px solid #000;
+      min-height: 14mm;
+      margin-top: 3mm;
+      padding: 2mm 3mm;
+      position: relative;
+    }
+
+    .answer-box.tall {
+      min-height: 28mm;
+    }
+
+    .answer-box.xtall {
+      min-height: 42mm;
+    }
+
+    .answer-box::before {
+      content: "Ответ:";
+      position: absolute;
+      top: 1.5mm;
+      left: 3mm;
+      font-size: 9pt;
+      color: #444;
+    }
+
+    .answer-box .inner {
+      margin-top: 5mm;
+      min-height: 6mm;
+    }
+
+    .subtask {
+      margin: 2mm 0 3mm 5mm;
+    }
+
+    pre, code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+    }
+
+    pre {
+      border: 1px solid #bbb;
+      background: #fafafa;
+      padding: 3mm 4mm;
+      margin: 3mm 0;
+      white-space: pre-wrap;
+    }
+
+    table.examples {
+      border-collapse: collapse;
+      margin: 3mm 0;
+      font-size: 11pt;
+    }
+
+    table.examples th,
+    table.examples td {
+      border: 1px solid #000;
+      padding: 2mm 5mm;
+      text-align: center;
+    }
+
+    .figure {
+      text-align: center;
+      margin: 4mm 0;
+    }
+
+    .figure-caption {
+      font-size: 10pt;
+      margin-top: 2mm;
+    }
+
+    .solution-space {
+      border: 1px dashed #888;
+      min-height: 35mm;
+      margin-top: 3mm;
+      padding: 2mm 3mm;
+      font-size: 9pt;
+      color: #666;
+    }
+
+    .solution-space::before {
+      content: "Решение:";
+    }
+
+    .solution-space.medium { min-height: 50mm; }
+    .solution-space.large { min-height: 70mm; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .footer {
+      margin-top: 8mm;
+      font-size: 9pt;
+      text-align: center;
+      color: #555;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <p class="no-print" style="text-align:center; font-family:sans-serif; font-size:10pt; color:#555;">
+    Для печати: Ctrl+P → формат A4, поля «по умолчанию», масштаб 100%.
+  </p>
+
+  <h1>АНОО ВО «Университет «Сириус»</h1>
+  <div class="subtitle">
+  Письменный экзамен — <strong>Вариант 2</strong><br>
+  Специальность: «Проектирование, разработка и управление сложными информационными системами»
+  </div>
+
+  <table class="meta">
+    <tr>
+      <td class="label">Фамилия, имя, отчество</td>
+      <td class="field" colspan="3"></td>
+    </tr>
+    <tr>
+      <td class="label">Класс / группа</td>
+      <td class="field" style="width:22%"></td>
+      <td class="label" style="width:18%">Дата</td>
+      <td class="field" style="width:22%"></td>
+    </tr>
+  </table>
+
+  <p class="note">
+    <strong>Время выполнения:</strong> 180 минут (3 часа).<br>
+    Задания 1–6 выполняются на бумаге. Задания 7–8 — на компьютере (Python).<br>
+    Каждое задание оценивается только при наличии ответа <em>и</em> решения (для зад. 1–6) или рабочего кода (для зад. 7–8).
+  </p>
+
+  <!-- Задание 1 -->
+  <div class="task">
+    <div class="task-title">Задание 1 (10 баллов)</div>
+    <p>Найдите значение выражения:</p>
+    <div class="formula">
+      ( 500·10<sup>−1</sup> / 2 ) : ( ( (20·2½ + 5:0,05):⅙ ) / ( (3½:¼ − 0,5:¼):0,04 ) − 1 )<sup>−1</sup>
+    </div>
+    <div class="solution-space"></div>
+    <div class="answer-box"><div class="inner"></div></div>
+  </div>
+
+  <!-- Задание 2 -->
+  <div class="task">
+    <div class="task-title">Задание 2 (10 баллов)</div>
+    <p>Найдите <strong>количество целых</strong> значений <em>x</em>, при которых выполняется неравенство:</p>
+    <div class="formula">
+      √(1296(x + 1)² − 1) &gt; √(1296 − (x − 1)²)
+    </div>
+    <div class="solution-space medium"></div>
+    <div class="answer-box"><div class="inner"></div></div>
+  </div>
+
+  <!-- Задание 3 -->
+  <div class="task">
+    <div class="task-title">Задание 3 (15 баллов)</div>
+    <p>
+      В треугольнике <em>ABC</em> угол <em>A</em> равен 60°, <em>AB</em> = 8, <em>AC</em> = 6.
+      Найдите радиус окружности, описанной около треугольника <em>ABC</em>.
+    </p>
+    <div class="solution-space large"></div>
+    <div class="answer-box"><div class="inner"></div></div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Задание 4 -->
+  <div class="task">
+    <div class="task-title">Задание 4 (15 баллов)</div>
+    <p>
+      Миша и Настя три раза обменивались марками. Каждый раз одна пятая часть марок Миши
+      менялась на одну треть марок Насти. Сколько марок было у Миши и Насти изначально,
+      если после второго обмена у Миши осталось 770 марок, а после третьего обмена
+      у Насти осталось 560?
+    </p>
+    <div class="solution-space large"></div>
+    <div class="answer-box tall"><div class="inner"></div></div>
+  </div>
+
+  <!-- Задание 5 -->
+  <div class="task">
+    <div class="task-title">Задание 5 (10 баллов)</div>
+    <p>В выражении 358<sub><em>x</em>72</sub> + 1<em>x</em>0<sub>100</sub> (<em>x</em> — неизвестная цифра):</p>
+    <p class="subtask">а) определите <strong>наибольшее</strong> значение <em>x</em>, при котором значение выражения кратно 99;</p>
+    <p class="subtask">б) для найденного <em>x</em> найдите частное от деления значения выражения на 99.</p>
+    <p><em>Ответ запишите в десятичной системе счисления.</em></p>
+    <div class="solution-space medium"></div>
+    <div class="answer-box">
+      <div class="inner">а) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; б)</div>
+    </div>
+  </div>
+
+  <!-- Задание 6 -->
+  <div class="task">
+    <div class="task-title">Задание 6 (10 баллов)</div>
+    <p>
+      Катя написала программу, которая по натуральному числу <em>n</em> должна выводить
+      <strong>наибольшее произведение двух его цифр</strong>, причём цифра, стоящая левее,
+      должна быть <strong>больше</strong> цифры, стоящей правее. В коде (рис. а) есть ошибки.
+    </p>
+    <p>а) Укажите ошибки.<br>б) Запишите исправленные строки.</p>
+
+    <div class="figure">
+      <pre>n = 73462815
+x = -1
+y = -1
+while n:
+    a = n % 10
+    m = n = n // 10
+    while m:
+        b = m % 10
+        m = m // 10
+        if a &lt; b:
+            if a * b &gt;= x * y:
+                x = b
+                y = a
+if x == -1:
+    print(x)
+else:
+    print(x, y)</pre>
+      <div class="figure-caption">Рис. а</div>
+    </div>
+
+    <div class="solution-space medium"></div>
+    <div class="answer-box xtall"><div class="inner"></div></div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Задание 7 -->
+  <div class="task">
+    <div class="task-title">Задание 7 (15 баллов) — выполняется на компьютере</div>
+    <p>
+      На координатной плоскости заданы графики функций <em>y</em> = <em>x</em>² − 3,
+      <em>y</em> = 4 − <em>x</em>² и <em>y</em> = 2 − <em>x</em>.
+      Закрашенной отмечена область, ограниченная этими графиками (рис. б).
+    </p>
+    <p>
+      Напишите программу, которая по координатам точки (<em>x</em>, <em>y</em>) определяет,
+      принадлежит ли она закрашенной области.
+    </p>
+    <p>
+      <strong>Формат ввода:</strong> строка из двух вещественных чисел <em>x</em> и <em>y</em>.<br>
+      <strong>Формат вывода:</strong> <code>YES</code>, если точка принадлежит области, иначе <code>NO</code>.
+    </p>
+
+    <table class="examples">
+      <tr><th>Ввод</th><th>Вывод</th></tr>
+      <tr><td>−1,5 &nbsp; 1,5</td><td>YES</td></tr>
+      <tr><td>1,5 &nbsp; 1,5</td><td>NO</td></tr>
+    </table>
+
+    <div class="figure">
+      <svg width="320" height="280" viewBox="-4 -4 8 8" xmlns="http://www.w3.org/2000/svg" style="border:1px solid #000;">
+        <!-- grid -->
+        <g stroke="#ddd" stroke-width="0.02">
+          <line x1="-4" y1="0" x2="4" y2="0"/>
+          <line x1="0" y1="-4" x2="0" y2="4"/>
+          <line x1="-4" y1="-3" x2="4" y2="-3"/><line x1="-4" y1="-2" x2="4" y2="-2"/>
+          <line x1="-4" y1="-1" x2="4" y2="-1"/><line x1="-4" y1="1" x2="4" y2="1"/>
+          <line x1="-4" y1="2" x2="4" y2="2"/><line x1="-4" y1="3" x2="4" y2="3"/>
+          <line x1="-3" y1="-4" x2="-3" y2="4"/><line x1="-2" y1="-4" x2="-2" y2="4"/>
+          <line x1="-1" y1="-4" x2="-1" y2="4"/><line x1="1" y1="-4" x2="1" y2="4"/>
+          <line x1="2" y1="-4" x2="2" y2="4"/><line x1="3" y1="-4" x2="3" y2="4"/>
+        </g>
+        <!-- axes -->
+        <line x1="-4" y1="0" x2="4" y2="0" stroke="#000" stroke-width="0.04"/>
+        <line x1="0" y1="-4" x2="0" y2="4" stroke="#000" stroke-width="0.04"/>
+        <!-- shaded region -->
+        <path d="M -1.87 0.5 C -1.5 2.2 -1.2 3 -1 3 L 1.79 0.21 C 1.85 0.35 1.87 0.45 1.87 0.5 C 1.5 0.5 0 0.5 -1.87 0.5 Z" fill="#ccc" fill-opacity="0.75" stroke="none"/>
+        <!-- y = x^2 - 3 -->
+        <path d="M -2.4 2.76 L -1.87 0.5 L -1 -2 L 0 -3 L 1 -2 L 1.87 0.5 L 2.4 2.76" fill="none" stroke="#000" stroke-width="0.05"/>
+        <!-- y = 4 - x^2 -->
+        <path d="M -2.4 0.24 L -1.87 0.5 L -1 3 L 0 4 L 1 3 L 1.87 0.5 L 2.4 0.24" fill="none" stroke="#000" stroke-width="0.05"/>
+        <!-- y = 2 - x -->
+        <line x1="-2" y1="4" x2="4" y2="-2" stroke="#000" stroke-width="0.05"/>
+        <!-- labels -->
+        <text x="3.2" y="-0.2" font-size="0.35" font-family="Times New Roman">x</text>
+        <text x="0.15" y="3.7" font-size="0.35" font-family="Times New Roman">y</text>
+        <text x="-3.8" y="3.5" font-size="0.28" font-family="Times New Roman">y = x² − 3</text>
+        <text x="1.2" y="3.5" font-size="0.28" font-family="Times New Roman">y = 4 − x²</text>
+        <text x="2.2" y="0.5" font-size="0.28" font-family="Times New Roman">y = 2 − x</text>
+      </svg>
+      <div class="figure-caption">Рис. б</div>
+    </div>
+
+    <p><em>Код программы сдаётся в электронной системе.</em></p>
+  </div>
+
+  <!-- Задание 8 -->
+  <div class="task">
+    <div class="task-title">Задание 8 (15 баллов) — выполняется на компьютере</div>
+    <p>
+      Разработайте программу для исполнителя «Сириус», которая находит корни квадратного
+      уравнения <em>ax</em>² + <em>bx</em> + <em>c</em> = 0 (гарантируется <em>D</em> ≥ 0).
+    </p>
+    <p>
+      Перед запуском коэффициенты <em>a</em>, <em>b</em>, <em>c</em> помещаются в регистры <em>r</em>1, <em>r</em>2, <em>r</em>3.
+      Корни запишите в регистры <em>r</em>5 и <em>r</em>6 (<em>r</em>5 ≥ <em>r</em>6).
+    </p>
+
+    <table class="examples" style="font-size:10pt; text-align:left;">
+      <tr><th style="text-align:center">Символ</th><th style="text-align:center">Операция</th><th>Пример</th><th>Результат</th></tr>
+      <tr><td style="text-align:center"><em>m</em></td><td>Присвоение</td><td><code>m r0 10.5</code></td><td><em>r</em>0 = 10,5</td></tr>
+      <tr><td style="text-align:center"><em>+</em></td><td>Сложение</td><td><code>+ r0 r1</code></td><td><em>r</em>0 = <em>r</em>0 + <em>r</em>1</td></tr>
+      <tr><td style="text-align:center"><em>−</em></td><td>Вычитание</td><td><code>− r1 r2</code></td><td><em>r</em>1 = <em>r</em>1 − <em>r</em>2</td></tr>
+      <tr><td style="text-align:center"><em>*</em></td><td>Умножение</td><td><code>* r2 r0</code></td><td><em>r</em>2 = <em>r</em>2 · <em>r</em>0</td></tr>
+      <tr><td style="text-align:center"><em>/</em></td><td>Деление</td><td><code>/ r3 r2</code></td><td><em>r</em>3 = <em>r</em>3 / <em>r</em>2</td></tr>
+      <tr><td style="text-align:center"><em>^</em></td><td>Степень</td><td><code>^ r4 r1</code></td><td><em>r</em>4 = <em>r</em>4<sup><em>r</em>1</sup></td></tr>
+    </table>
+
+    <p><em>Программу запишите на отдельном листе или сдайте в электронной системе.</em></p>
+    <div class="solution-space large"></div>
+  </div>
+
+  <div class="footer">
+    Вариант 2 &nbsp;|&nbsp; Лист &nbsp;&nbsp;&nbsp; из &nbsp;&nbsp;&nbsp;
+  </div>
+
+</body>
+</html>
