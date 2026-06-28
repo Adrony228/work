@@ -651,6 +651,74 @@ def _t5_solve_complex(spec: dict) -> tuple[int, int]:
     raise ValueError(f"no valid x for task5 complex {spec}")
 
 
+def _t5_render_complex(spec: dict, x5: int, q5: int) -> dict:
+    op_sym = {"+": "+", "-": "−", "*": "·"}
+    html_parts: list[str] = []
+    tex_parts: list[str] = []
+    lead = spec["lead_coeff"]
+    d0, b0 = spec["terms"][0]
+    first_html = _t5_num_html(d0, b0)
+    first_tex = _t5_num_tex(d0, b0)
+    if lead != 1:
+        html_parts.append(f"{lead} · {first_html}")
+        tex_parts.append(f"{lead} \\cdot {first_tex}")
+    else:
+        html_parts.append(first_html)
+        tex_parts.append(first_tex)
+    for op, (digits, base) in zip(spec["ops"], spec["terms"][1:]):
+        sym = op_sym[op]
+        html_parts.append(f" {sym} {_t5_num_html(digits, base)}")
+        tex_parts.append(f" {op} {_t5_num_tex(digits, base)}")
+    return {
+        "complex": True,
+        "html": "".join(html_parts),
+        "tex": "".join(tex_parts),
+        "x5": x5,
+        "q5": q5,
+        "n_ops": len(spec["ops"]) + (1 if lead != 1 else 0),
+    }
+
+
+def _build_task5_simple_spec(d5: str, suf: int, last: int) -> dict:
+    base_var = ("x", suf)
+    base_terms = [(d5, base_var), (f"1x{last}", 100)]
+    extra_terms = [
+        ("x3", base_var),
+        ("2x", base_var),
+        ("x7", base_var),
+        ("3x", base_var),
+        ("x4", base_var),
+        ("4x", base_var),
+        ("x2", base_var),
+        ("5x", base_var),
+    ]
+    ops_options = [
+        ["+", "-", "+"],
+        ["+", "+", "-"],
+        ["-", "+", "+"],
+        ["+", "-", "-"],
+        ["-", "+", "-"],
+        ["-", "-", "+"],
+    ]
+    best: tuple[int, int, dict] | None = None
+    for ops in ops_options:
+        for t2 in extra_terms:
+            for t3 in extra_terms:
+                if t2[0] == t3[0]:
+                    continue
+                spec = {"lead_coeff": 1, "ops": ops, "terms": [base_terms[0], base_terms[1], t2, t3]}
+                try:
+                    x5, q5 = _t5_solve_complex(spec)
+                except ValueError:
+                    continue
+                score = (x5, q5)
+                if best is None or score > (best[0], best[1]):
+                    best = (x5, q5, spec)
+    if best is None:
+        raise ValueError(f"cannot build 3-op task5 for {d5}, x{suf}, {last}")
+    return _t5_render_complex(best[2], best[0], best[1])
+
+
 def _t5_num_html(digits: str, base) -> str:
     sub = f"x{base[1]}" if isinstance(base, tuple) else str(base)
     body = re.sub(r"x", "<em>x</em>", digits, count=1)
@@ -666,49 +734,9 @@ def build_task5(i: int) -> dict:
     if i in T5_COMPLEX:
         spec = T5_COMPLEX[i]
         x5, q5 = _t5_solve_complex(spec)
-        op_sym = {"+": "+", "-": "−", "*": "·"}
-        html_parts: list[str] = []
-        tex_parts: list[str] = []
-        lead = spec["lead_coeff"]
-        d0, b0 = spec["terms"][0]
-        first_html = _t5_num_html(d0, b0)
-        first_tex = _t5_num_tex(d0, b0)
-        if lead != 1:
-            html_parts.append(f"{lead} · {first_html}")
-            tex_parts.append(f"{lead} \\cdot {first_tex}")
-        else:
-            html_parts.append(first_html)
-            tex_parts.append(first_tex)
-        for op, (digits, base) in zip(spec["ops"], spec["terms"][1:]):
-            sym = op_sym[op]
-            html_parts.append(f" {sym} {_t5_num_html(digits, base)}")
-            tex_parts.append(f" {op} {_t5_num_tex(digits, base)}")
-        return {
-            "complex": True,
-            "html": "".join(html_parts),
-            "tex": "".join(tex_parts),
-            "x5": x5,
-            "q5": q5,
-            "n_ops": len(spec["ops"]) + (1 if lead != 1 else 0),
-        }
-    d5, suf, last, x5, q5 = TASK5[i]
-    return {
-        "complex": False,
-        "d5": d5,
-        "suf": suf,
-        "last": last,
-        "html": (
-            f"{d5}<sub>x{suf}</sub> + 1x{last}<sub>100</sub> "
-            f"− 1<sub>100</sub> + 1<sub>100</sub>"
-        ),
-        "tex": (
-            f"{d5}_{{x{suf}}}+1x{last}_{{100}}"
-            f"-1_{{100}}+1_{{100}}"
-        ),
-        "x5": x5,
-        "q5": q5,
-        "n_ops": 3,
-    }
+        return _t5_render_complex(spec, x5, q5)
+    d5, suf, last, _, _ = TASK5[i]
+    return _build_task5_simple_spec(d5, suf, last)
 
 TASK6 = [
     {
