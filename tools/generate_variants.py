@@ -697,10 +697,17 @@ def build_task5(i: int) -> dict:
         "d5": d5,
         "suf": suf,
         "last": last,
-        "html": f"{d5}<sub>x{suf}</sub> + 1x{last}<sub>100</sub>",
-        "tex": f"{d5}_{{x{suf}}}+1x{last}_{{100}}",
+        "html": (
+            f"{d5}<sub>x{suf}</sub> + 1x{last}<sub>100</sub> "
+            f"− 1<sub>100</sub> + 1<sub>100</sub>"
+        ),
+        "tex": (
+            f"{d5}_{{x{suf}}}+1x{last}_{{100}}"
+            f"-1_{{100}}+1_{{100}}"
+        ),
         "x5": x5,
         "q5": q5,
+        "n_ops": 3,
     }
 
 TASK6 = [
