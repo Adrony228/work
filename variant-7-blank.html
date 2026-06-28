@@ -70,6 +70,12 @@ table.examples th { background: #eef2f6; }
 .figure-caption { font-size: 10pt; margin-top: 2mm; font-style: italic; text-align: center; }
 .region-conditions { font-size: 10.5pt; margin: 2mm 0 3mm 6mm; line-height: 1.4; }
 .region-conditions p { margin: 1mm 0; }
+.isa-note {
+  border: 1px solid #bbb; background: #f8fafc; padding: 3mm 4mm;
+  font-size: 10.5pt; margin: 3mm 0; border-radius: 2px; line-height: 1.4;
+}
+table.examples-left { text-align: left; }
+table.examples-left th { text-align: center; }
 .page-break { page-break-before: always; }
 .footer { margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #ccc; font-size: 9pt; text-align: center; color: #666; }
 .no-print { text-align: center; font-family: sans-serif; font-size: 10pt; color: #666; margin-bottom: 4mm; }
@@ -238,14 +244,23 @@ print(cnt)</pre><div class="figure-caption">Рис. а</div></div>
   <div class="task">
     <div class="task-head"><span class="task-num">Задание 8</span><span class="task-pts">(15 баллов, компьютер)</span></div>
     <div class="task-body">
-      <p>Исполнитель «Сириус»: <strong>методом половинного деления</strong> найти корень f(x)=x^3-x-1=0.
-      Промежуточные значения — в <strong>массиве памяти</strong> <em>w</em>[] (стек не использовать).</p>
-      <p>Вход: r1=1, r2=2, r3=0{,}001. Выход: r5.</p>
-      <p>Ячейки: w[0]–w[3] как в задании с бисекцией.</p>
-      <table class="examples" style="width:100%;font-size:10pt">
-        <tr><th>mw / mr / +w …</th><th>Команды массива w[0]–w[9]</th></tr>
-        <tr><td colspan="2">Регистры r0–r7: m, +, −, *, /, ^</td></tr>
+      <p>Разработайте программу для исполнителя «Сириус», которая <strong>методом половинного деления</strong> находит приближённый корень уравнения <em>f(x) = x⁴ − 3x − 1</em> = 0 на отрезке [1; 2] с точностью ε = 0,001.</p>
+      <p><strong>Вход:</strong> <em>r</em>1 — левая граница отрезка (1), <em>r</em>2 — правая граница отрезка (2), <em>r</em>3 — требуемая точность ε (0,001).<br><strong>Выход:</strong> приближённое значение корня в регистре r5.</p>
+      <p>Назначение ячеек массива: <em>w</em>[0] — левая граница, <em>w</em>[1] — правая граница, <em>w</em>[2] — середина, <em>w</em>[3] — значение <em>f</em>(середина).</p>
+      <p class="isa-note"><strong>Обязательно:</strong><ol style="margin:2mm 0 0 5mm;padding:0;"><li>Промежуточные значения (границы, середина, значения функции) храните в <strong>массиве памяти</strong> <em>w</em>[0], <em>w</em>[1], … — не в стеке.</li><li>На каждой итерации обновляйте <em>w</em>[0], <em>w</em>[1], <em>w</em>[2], <em>w</em>[3].</li><li>Итерации выполняйте, пока |<em>w</em>[1] − <em>w</em>[0]| &gt; ε.</li></ol></p>
+
+      <table class="examples examples-left" style="width:100%;font-size:10pt">
+        <tr><th colspan="4">Команды регистров (r0–r7)</th></tr>
+        <tr><th>Символ</th><th>Действие</th><th>Пример</th><th>Результат</th></tr>
+        <tr><td><em>m</em></td><td>присвоение</td><td><code>m r0 2.5</code></td><td>r0 = 2,5</td></tr>
+        <tr><td><em>+ − * / ^</em></td><td>арифметика</td><td><code>+ r0 r1</code></td><td>r0 = r0 + r1</td></tr>
+        <tr><th colspan="4">Команды массива памяти w[0]–w[9]</th></tr>
+        <tr><td><code>mw</code></td><td>запись</td><td><code>mw 0 r1</code></td><td>w[0] = r1</td></tr>
+        <tr><td><code>mr</code></td><td>чтение</td><td><code>mr r4 2</code></td><td>r4 = w[2]</td></tr>
+        <tr><td><code>+w −w *w /w</code></td><td>арифметика</td><td><code>+w 0 r4</code></td><td>w[0] = w[0] + r4</td></tr>
       </table>
+
+      <p><em>Пример фрагмента (инициализация границ отрезка и вычисление середины):</em></p>
       <pre class="code">mw 0 r1
 mw 1 r2
 mr r0 0
@@ -255,6 +270,24 @@ mr r4 1
 m r7 2
 / r0 r7
 mw 2 r0</pre>
+      <p><em>Пример вычисления f(x) (вычисление f(x) в середине отрезка (x = w[2])):</em></p>
+      <pre class="code">mr r4 2
+m r5 r4
+m r7 4
+^ r5 r7
+m r0 r5
+m r5 r4
+m r7 3
+* r5 r7
+m r7 0
+- r7 r5
+m r5 r7
+- r0 r5
+m r5 0
+m r7 1
+- r5 r7
+- r0 r5
+mw 3 r0</pre>
       <p class="solution-label">Программа:</p><div class="solution-space large"></div>
     </div>
   </div>

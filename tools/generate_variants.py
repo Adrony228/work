@@ -556,141 +556,6 @@ TASK6 = [
     },
 ]
 
-TASK8 = [
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3-3x-1=0",
-        "eq_tex": "f(x)=x^3-3x-1=0",
-        "method": "bisection",
-        "input": "$r1=1$, $r2=2$, $r3=0{,}001$",
-        "output": "$r5$ — приближённый корень",
-        "cells": "$w[0]$ граница слева, $w[1]$ справа, $w[2]$ середина, $w[3]$ значение $f$ в середине",
-        "answer": "$\\approx 1{,}879$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3-2x-5=0",
-        "eq_tex": "f(x)=x^3-2x-5=0",
-        "method": "newton",
-        "input": "$r1=2{,}5$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$ — приближённый корень",
-        "cells": "$w[0]$ текущее $x$, $w[1]$ $f(x)$, $w[2]$ $f'(x)$, $w[3]$ новое приближение",
-        "answer": "$\\approx 2{,}095$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nm r5 2\n* r5 r4\n- r0 r5\nm r7 5\n- r0 r7\nmw 1 r0",
-    },
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3-x-1=0",
-        "eq_tex": "f(x)=x^3-x-1=0",
-        "method": "bisection",
-        "input": "$r1=1$, $r2=2$, $r3=0{,}001$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$ как в задании с бисекцией",
-        "answer": "$\\approx 1{,}325$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3-x-3=0",
-        "eq_tex": "f(x)=x^3-x-3=0",
-        "method": "newton",
-        "input": "$r1=2$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$ как в методе Ньютона",
-        "answer": "$\\approx 1{,}671$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nm r5 1\n* r5 r4\n- r0 r5\nm r7 3\n- r0 r7\nmw 1 r0",
-    },
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3+2x-5=0",
-        "eq_tex": "f(x)=x^3+2x-5=0",
-        "method": "bisection",
-        "input": "$r1=1$, $r2=2$, $r3=0{,}001$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 1{,}432$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3+3x-7=0",
-        "eq_tex": "f(x)=x^3+3x-7=0",
-        "method": "newton",
-        "input": "$r1=2$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 1{,}568$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nm r5 3\n* r5 r4\n+ r0 r5\nm r7 7\n- r0 r7\nmw 1 r0",
-    },
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3-4x+1=0",
-        "eq_tex": "f(x)=x^3-4x+1=0",
-        "method": "bisection",
-        "input": "$r1=0$, $r2=1$, $r3=0{,}001$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 0{,}257$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3-4x+2=0",
-        "eq_tex": "f(x)=x^3-4x+2=0",
-        "method": "newton",
-        "input": "$r1=2$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 1{,}769$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nm r5 4\n* r5 r4\n- r0 r5\nm r7 2\n+ r0 r7\nmw 1 r0",
-    },
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3+ x-1=0",
-        "eq_tex": "f(x)=x^3+x-1=0",
-        "method": "bisection",
-        "input": "$r1=0$, $r2=1$, $r3=0{,}001$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 0{,}682$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3-5x+1=0",
-        "eq_tex": "f(x)=x^3-5x+1=0",
-        "method": "newton",
-        "input": "$r1=2{,}5$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 2{,}257$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nm r5 5\n* r5 r4\n- r0 r5\nm r7 1\n+ r0 r7\nmw 1 r0",
-    },
-    {
-        "title": "методом половинного деления",
-        "eq": "x^3-2x^2-1=0",
-        "eq_tex": "f(x)=x^3-2x^2-1=0",
-        "method": "bisection",
-        "input": "$r1=2$, $r2=3$, $r3=0{,}001$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 2{,}532$",
-        "fragment": "mw 0 r1\nmw 1 r2\nmr r0 0\n+ r0 r1\nmr r4 1\n+ r0 r4\nm r7 2\n/ r0 r7\nmw 2 r0",
-    },
-    {
-        "title": "методом Ньютона",
-        "eq": "x^3-x^2-4=0",
-        "eq_tex": "f(x)=x^3-x^2-4=0",
-        "method": "newton",
-        "input": "$r1=2$, $r2=0{,}001$, $r3=20$",
-        "output": "$r5$",
-        "cells": "$w[0]$–$w[3]$",
-        "answer": "$\\approx 2{,}058$",
-        "fragment": "mw 0 r1\nmr r4 0\nm r0 r4\nm r7 3\n^ r0 r7\nmr r5 0\n^ r5 r4\n- r0 r5\nm r7 4\n- r0 r7\nmw 1 r0",
-    },
-]
-
 NAMES = [
     ("Миша", "Настя", "марок"),
     ("Артём", "Соня", "наклеек"),
@@ -705,6 +570,264 @@ NAMES = [
     ("Кирилл", "Аня", "марок"),
     ("Пётр", "Ира", "стикеров"),
 ]
+
+# ---------------------------------------------------------------------------
+# Task 8 — корни уравнений (кубические и биквадратные, не квадратичные)
+# ---------------------------------------------------------------------------
+
+_X = sp.Symbol("x")
+_SUP = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def _pow_html(n: int) -> str:
+    if n == 0:
+        return ""
+    if n == 1:
+        return "x"
+    return "x" + str(n).translate(_SUP)
+
+
+def _coeff_html(c) -> str:
+    c = int(c) if c == int(c) else c
+    if c == 1:
+        return ""
+    if c == -1:
+        return "−"
+    if c < 0:
+        return f"−{abs(c)}"
+    return str(c)
+
+
+def _poly_terms(expr):
+  poly = sp.Poly(sp.expand(expr), _X)
+  return sorted(
+      ((monom[0] if isinstance(monom, tuple) else monom, coeff) for monom, coeff in poly.as_dict().items()),
+      reverse=True,
+  )
+
+
+def expr_to_html(expr) -> str:
+    parts: list[str] = []
+    for power, coeff in _poly_terms(expr):
+        c = _coeff_html(coeff)
+        if power == 0:
+            if coeff < 0:
+                aval = abs(int(coeff)) if coeff == int(coeff) else abs(coeff)
+                chunk = f"− {aval}"
+            else:
+                chunk = str(int(coeff)) if coeff == int(coeff) else str(coeff)
+        elif power == 1:
+            if coeff < 0:
+                aval = abs(int(coeff)) if coeff == int(coeff) else abs(coeff)
+                chunk = f"− {aval}x"
+            elif coeff == 1:
+                chunk = "x"
+            else:
+                aval = int(coeff) if coeff == int(coeff) else coeff
+                chunk = f"{aval}x"
+        else:
+            if coeff < 0:
+                aval = abs(int(coeff)) if coeff == int(coeff) else abs(coeff)
+                chunk = f"− {aval}{_pow_html(power)}"
+            elif coeff == 1:
+                chunk = _pow_html(power)
+            else:
+                aval = int(coeff) if coeff == int(coeff) else coeff
+                chunk = f"{aval}{_pow_html(power)}"
+        if not parts:
+            parts.append(chunk.lstrip("+"))
+        else:
+            if str(chunk).startswith("−"):
+                parts.append(" " + chunk)
+            else:
+                parts.append(" + " + chunk)
+    return "".join(parts)
+
+
+def expr_to_tex(expr) -> str:
+    return sp.latex(expr, symbol_names={_X: "x"})
+
+
+def _eval_term(coeff, power, x_reg="r4", dest="r5", exp_reg="r7") -> list[str]:
+    """Вычислить coeff·x^power (x в x_reg) и записать в dest."""
+    lines: list[str] = []
+    c_abs = abs(int(coeff)) if coeff == int(coeff) else abs(coeff)
+    if power == 0:
+        val = int(coeff) if coeff == int(coeff) else coeff
+        if coeff < 0:
+            aval = abs(int(coeff)) if coeff == int(coeff) else abs(coeff)
+            return [
+                f"m {dest} 0",
+                f"m {exp_reg} {aval}",
+                f"- {dest} {exp_reg}",
+            ]
+        return [f"m {dest} {val}"]
+    lines.append(f"m {dest} {x_reg}")
+    if power > 1:
+        lines.append(f"m {exp_reg} {power}")
+        lines.append(f"^ {dest} {exp_reg}")
+    if c_abs != 1:
+        val = int(c_abs) if c_abs == int(c_abs) else c_abs
+        lines.append(f"m {exp_reg} {val}")
+        lines.append(f"* {dest} {exp_reg}")
+    if coeff < 0:
+        lines.append(f"m {exp_reg} 0")
+        lines.append(f"- {exp_reg} {dest}")
+        lines.append(f"m {dest} {exp_reg}")
+    return lines
+
+
+def gen_f_fragment(expr, x_cell: int = 0, out_cell: int = 1) -> str:
+    """Фрагмент вычисления f(x): x берётся из w[x_cell], результат в w[out_cell]."""
+    terms = _poly_terms(expr)
+    lines = [f"mr r4 {x_cell}"]
+    first = True
+    for power, coeff in terms:
+        lines += _eval_term(coeff, power)
+        if first:
+            lines.append("m r0 r5")
+            first = False
+        elif coeff >= 0:
+            lines.append("+ r0 r5")
+        else:
+            lines.append("- r0 r5")
+    lines.append(f"mw {out_cell} r0")
+    return "\n".join(lines)
+
+
+BISECTION_INIT_FRAGMENT = """mw 0 r1
+mw 1 r2
+mr r0 0
++ r0 r1
+mr r4 1
++ r0 r4
+m r7 2
+/ r0 r7
+mw 2 r0"""
+
+TASK8_SPECS = [
+    {"method": "bisection", "expr": _X**3 - 3 * _X - 1, "a": 1, "b": 2, "eps": 0.001},
+    {"method": "newton", "expr": _X**3 - 2 * _X - 5, "x0": 2.5, "eps": 0.001, "max_iter": 20},
+    {"method": "bisection", "expr": _X**4 - 3 * _X - 1, "a": 1, "b": 2, "eps": 0.001},
+    {"method": "newton", "expr": _X**4 - 2 * _X - 1, "x0": 1.6, "eps": 0.001, "max_iter": 20},
+    {"method": "bisection", "expr": 2 * _X**3 - 5 * _X + 3, "a": -2, "b": -1, "eps": 0.001},
+    {"method": "newton", "expr": _X**3 - 2 * _X**2 - 1, "x0": 2.5, "eps": 0.001, "max_iter": 20},
+    {"method": "bisection", "expr": _X**4 - 3 * _X**2 + _X - 1, "a": 1, "b": 2, "eps": 0.001},
+    {"method": "newton", "expr": _X**4 + _X**2 - 3 * _X - 1, "x0": 1.7, "eps": 0.001, "max_iter": 20},
+    {"method": "bisection", "expr": _X**4 + _X**2 - 6, "a": 1, "b": 2, "eps": 0.001},
+    {"method": "newton", "expr": 3 * _X**3 - 7 * _X + 2, "x0": 2.0, "eps": 0.001, "max_iter": 20},
+    {"method": "bisection", "expr": _X**4 - 4 * _X**3 + 3, "a": 3, "b": 4, "eps": 0.001},
+    {"method": "newton", "expr": _X**4 - _X**3 - 3 * _X - 1, "x0": 2.0, "eps": 0.001, "max_iter": 20},
+]
+
+
+def build_task8(spec: dict) -> dict:
+    expr = sp.expand(spec["expr"])
+    eq_html = expr_to_html(expr)
+    eq_tex = expr_to_tex(expr)
+    method = spec["method"]
+
+    if method == "bisection":
+        a, b, eps = spec["a"], spec["b"], spec["eps"]
+        fa, fb = float(expr.subs(_X, a)), float(expr.subs(_X, b))
+        if fa * fb >= 0:
+            raise ValueError(f"bisection interval [{a}, {b}] has no sign change for {expr}")
+        root = float(sp.nsolve(expr, _X, (a + b) / 2))
+        ans = f"\\approx {_fmt_num(round(root, 3))}"
+        fragment = BISECTION_INIT_FRAGMENT
+        fragment_note = "инициализация границ отрезка и вычисление середины"
+        f_fragment = gen_f_fragment(expr, x_cell=2, out_cell=3)
+        return {
+            "method": method,
+            "method_title": "методом половинного деления",
+            "eq_html": eq_html,
+            "eq_tex": eq_tex,
+            "f_html": f"f(x) = {eq_html}",
+            "f_tex": f"f(x)={eq_tex}",
+            "interval": (a, b),
+            "interval_str": f"[{_fmt_num(a)}; {_fmt_num(b)}]",
+            "eps": eps,
+            "r1": a,
+            "r2": b,
+            "r3": eps,
+            "r1_desc": f"левая граница отрезка ({_fmt_num(a)})",
+            "r2_desc": f"правая граница отрезка ({_fmt_num(b)})",
+            "r3_desc": f"требуемая точность ε ({_fmt_num(eps)})",
+            "output_desc": "приближённое значение корня в регистре r5",
+            "cells_html": (
+                "<em>w</em>[0] — левая граница, <em>w</em>[1] — правая граница, "
+                "<em>w</em>[2] — середина, <em>w</em>[3] — значение <em>f</em>(середина)"
+            ),
+            "cells_tex": (
+                "$w[0]$ — левая граница, $w[1]$ — правая, $w[2]$ — середина, "
+                "$w[3]$ — $f$(середина)"
+            ),
+        "requirements": [
+            "Промежуточные значения (границы, середина, значения функции) храните в массиве памяти w[0], w[1], … — не в стеке.",
+            "На каждой итерации обновляйте w[0], w[1], w[2], w[3].",
+            "Итерации выполняйте, пока |w[1] − w[0]| > ε.",
+        ],
+        "requirements_html": [
+            "Промежуточные значения (границы, середина, значения функции) храните в "
+            "<strong>массиве памяти</strong> <em>w</em>[0], <em>w</em>[1], … — не в стеке.",
+            "На каждой итерации обновляйте <em>w</em>[0], <em>w</em>[1], <em>w</em>[2], <em>w</em>[3].",
+            "Итерации выполняйте, пока |<em>w</em>[1] − <em>w</em>[0]| &gt; ε.",
+        ],
+            "fragment": fragment,
+            "fragment_note": fragment_note,
+            "f_fragment": f_fragment,
+            "f_fragment_note": "вычисление f(x) в середине отрезка (x = w[2])",
+            "answer": f"${ans}$",
+            "answer_note": f"корень $\\approx {_fmt_num(round(root, 3))}$; массив $w[]$ для границ и $f$",
+        }
+
+    x0, eps, max_iter = spec["x0"], spec["eps"], spec["max_iter"]
+    root = float(sp.nsolve(expr, _X, x0))
+    ans = f"\\approx {_fmt_num(round(root, 3))}"
+    f_fragment = gen_f_fragment(expr, x_cell=0, out_cell=1)
+    return {
+        "method": method,
+        "method_title": "методом Ньютона",
+        "eq_html": eq_html,
+        "eq_tex": eq_tex,
+        "f_html": f"f(x) = {eq_html}",
+        "f_tex": f"f(x)={eq_tex}",
+        "x0": x0,
+        "eps": eps,
+        "max_iter": max_iter,
+        "r1": x0,
+        "r2": eps,
+        "r3": max_iter,
+        "r1_desc": f"начальное приближение ({_fmt_num(x0)})",
+        "r2_desc": f"требуемая точность ε ({_fmt_num(eps)})",
+        "r3_desc": f"максимальное число итераций ({max_iter})",
+        "output_desc": "приближённое значение корня в регистре r5",
+        "cells_html": (
+            "<em>w</em>[0] — текущее <em>x</em>, <em>w</em>[1] — <em>f</em>(<em>x</em>), "
+            "<em>w</em>[2] — <em>f</em>′(<em>x</em>), <em>w</em>[3] — новое приближение"
+        ),
+        "cells_tex": (
+            "$w[0]$ — текущее $x$, $w[1]$ — $f(x)$, $w[2]$ — $f'(x)$, $w[3]$ — новое $x$"
+        ),
+        "requirements": [
+            "На каждой итерации храните в массиве памяти w[] значения x, f(x), f′(x) и новое приближение — не в стеке.",
+            "Обновляйте как минимум w[0]–w[3] на каждом шаге.",
+            "Остановка: |f(x)| < ε или достигнут лимит итераций r3.",
+        ],
+        "requirements_html": [
+            "На каждой итерации храните в <strong>массиве памяти</strong> <em>w</em>[] значения "
+            "<em>x</em>, <em>f</em>(<em>x</em>), <em>f</em>′(<em>x</em>) и новое приближение — не в стеке.",
+            "Обновляйте как минимум <em>w</em>[0]–<em>w</em>[3] на каждом шаге.",
+            "Остановка: |<em>f</em>(<em>x</em>)| &lt; ε или достигнут лимит итераций <em>r</em>3.",
+        ],
+        "fragment": "mw 0 r1",
+        "fragment_note": "запись начального приближения в w[0]",
+        "f_fragment": f_fragment,
+        "f_fragment_note": "вычисление f(x) при x = w[0]",
+        "answer": f"${ans}$",
+        "answer_note": f"корень $\\approx {_fmt_num(round(root, 3))}$; массив $w[]$ для итераций Ньютона",
+    }
+
 
 EXCHANGE_FRAC = [
     ("одна пятая", "одна треть", sp.Rational(1, 5), sp.Rational(1, 3)),
@@ -752,7 +875,7 @@ def build_variant(num: int) -> dict:
     d5, suf, last, x5, q5 = TASK5[i]
     t6 = TASK6[i]
     reg = REGION_CONFIGS[i]
-    t8 = TASK8[i]
+    t8 = build_task8(TASK8_SPECS[i])
     n1, n2, item = NAMES[i]
     ef1, ef2, _, _ = EXCHANGE_FRAC[i]
     p2t, k3t, p0, k0 = EXCHANGE_DATA[i]
@@ -778,6 +901,96 @@ def build_variant(num: int) -> dict:
         "t7_svg": make_svg(reg),
         "t8": t8,
     }
+
+
+def task8_problem_html(t8: dict) -> str:
+    if t8["method"] == "bisection":
+        return (
+            f"<p>Разработайте программу для исполнителя «Сириус», которая "
+            f"<strong>{t8['method_title']}</strong> находит приближённый корень уравнения "
+            f"<em>{t8['f_html']}</em> = 0 на отрезке {t8['interval_str']} "
+            f"с точностью ε = {_fmt_num(t8['eps'])}.</p>"
+        )
+    return (
+        f"<p>Разработайте программу для исполнителя «Сириус», которая "
+        f"<strong>{t8['method_title']}</strong> находит приближённый корень уравнения "
+        f"<em>{t8['f_html']}</em> = 0 с точностью ε = {_fmt_num(t8['eps'])}.</p>"
+    )
+
+
+def task8_io_html(t8: dict) -> str:
+    return (
+        f"<p><strong>Вход:</strong> <em>r</em>1 — {t8['r1_desc']}, "
+        f"<em>r</em>2 — {t8['r2_desc']}, <em>r</em>3 — {t8['r3_desc']}.<br>"
+        f"<strong>Выход:</strong> {t8['output_desc']}.</p>"
+    )
+
+
+def task8_requirements_html(t8: dict) -> str:
+    items = "".join(f"<li>{req}</li>" for req in t8["requirements_html"])
+    return (
+        f'<p class="isa-note"><strong>Обязательно:</strong><ol style="margin:2mm 0 0 5mm;padding:0;">'
+        f"{items}</ol></p>"
+    )
+
+
+def task8_md_body(t8: dict) -> str:
+    if t8["method"] == "bisection":
+        intro = (
+            f"Разработайте программу для исполнителя «Сириус», которая **{t8['method_title']}** "
+            f"находит приближённый корень уравнения\n\n"
+            f"$${t8['f_tex']}=0$$\n\n"
+            f"на отрезке ${t8['interval_str'].replace(';', ';\\,')}$ с точностью "
+            f"$\\varepsilon={str(t8['eps']).replace('.', '{,}')}$."
+        )
+    else:
+        intro = (
+            f"Разработайте программу для исполнителя «Сириус», которая **{t8['method_title']}** "
+            f"находит приближённый корень уравнения\n\n"
+            f"$${t8['f_tex']}=0$$\n\n"
+            f"с точностью $\\varepsilon={str(t8['eps']).replace('.', '{,}')}$."
+        )
+    reqs = "\n".join(f"{i}. {r}" for i, r in enumerate(t8["requirements"], 1))
+    frag2 = ""
+    if t8["f_fragment"] != t8["fragment"]:
+        frag2 = f"\n*Вычисление $f(x)$ ({t8['f_fragment_note']}):*\n\n```\n{t8['f_fragment']}\n```\n"
+    return f"""{intro}
+
+**Вход:** $r1$ — {t8['r1_desc']}; $r2$ — {t8['r2_desc']}; $r3$ — {t8['r3_desc']}.
+
+**Выход:** {t8['output_desc'].replace('r5', '$r5$')}.
+
+**Требования:**
+
+{reqs}
+
+{t8['cells_tex']}
+
+### Команды регистров ($r0$–$r7$)
+
+| Символ | Действие | Пример | Результат |
+|--------|----------|--------|-----------|
+| $m$ | присвоение | `m r0 2.5` | $r0 = 2{{,}}5$ |
+| $+$ | сложение | `+ r0 r1` | $r0 = r0 + r1$ |
+| $-$ | вычитание | `- r1 r2` | $r1 = r1 - r2$ |
+| $*$ | умножение | `* r2 r0` | $r2 = r2 \\cdot r0$ |
+| $/$ | деление | `/ r3 r2` | $r3 = r3 / r2$ |
+| $^$ | степень | `^ r4 r1` | $r4 = r4^{{r1}}$ |
+
+### Команды массива памяти $w[0]$–$w[9]$
+
+| Команда | Действие | Пример | Результат |
+|---------|----------|--------|-----------|
+| `mw` | запись | `mw 0 r1` | $w[0] = r1$ |
+| `mr` | чтение | `mr r4 2` | $r4 = w[2]$ |
+| `+w −w *w /w` | арифметика | `+w 0 r4` | $w[0] = w[0] + r4$ |
+
+*Пример фрагмента ({t8['fragment_note']}):*
+
+```
+{t8['fragment']}
+```
+{frag2}"""
 
 
 CSS = """
@@ -847,6 +1060,12 @@ table.examples th { background: #eef2f6; }
 .figure-caption { font-size: 10pt; margin-top: 2mm; font-style: italic; text-align: center; }
 .region-conditions { font-size: 10.5pt; margin: 2mm 0 3mm 6mm; line-height: 1.4; }
 .region-conditions p { margin: 1mm 0; }
+.isa-note {
+  border: 1px solid #bbb; background: #f8fafc; padding: 3mm 4mm;
+  font-size: 10.5pt; margin: 3mm 0; border-radius: 2px; line-height: 1.4;
+}
+table.examples-left { text-align: left; }
+table.examples-left th { text-align: center; }
 .page-break { page-break-before: always; }
 .footer { margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #ccc; font-size: 9pt; text-align: center; color: #666; }
 .no-print { text-align: center; font-family: sans-serif; font-size: 10pt; color: #666; margin-bottom: 4mm; }
@@ -981,15 +1200,26 @@ def render_blank(v: dict) -> str:
   <div class="task">
     <div class="task-head"><span class="task-num">Задание 8</span><span class="task-pts">(15 баллов, компьютер)</span></div>
     <div class="task-body">
-      <p>Исполнитель «Сириус»: <strong>{t8['title']}</strong> найти корень {t8['eq_tex'].replace('$','')}.
-      Промежуточные значения — в <strong>массиве памяти</strong> <em>w</em>[] (стек не использовать).</p>
-      <p>Вход: {t8['input'].replace('$','')}. Выход: {t8['output'].replace('$','')}.</p>
-      <p>Ячейки: {t8['cells'].replace('$','')}.</p>
-      <table class="examples" style="width:100%;font-size:10pt">
-        <tr><th>mw / mr / +w …</th><th>Команды массива w[0]–w[9]</th></tr>
-        <tr><td colspan="2">Регистры r0–r7: m, +, −, *, /, ^</td></tr>
+      {task8_problem_html(t8)}
+      {task8_io_html(t8)}
+      <p>Назначение ячеек массива: {t8['cells_html']}.</p>
+      {task8_requirements_html(t8)}
+
+      <table class="examples examples-left" style="width:100%;font-size:10pt">
+        <tr><th colspan="4">Команды регистров (r0–r7)</th></tr>
+        <tr><th>Символ</th><th>Действие</th><th>Пример</th><th>Результат</th></tr>
+        <tr><td><em>m</em></td><td>присвоение</td><td><code>m r0 2.5</code></td><td>r0 = 2,5</td></tr>
+        <tr><td><em>+ − * / ^</em></td><td>арифметика</td><td><code>+ r0 r1</code></td><td>r0 = r0 + r1</td></tr>
+        <tr><th colspan="4">Команды массива памяти w[0]–w[9]</th></tr>
+        <tr><td><code>mw</code></td><td>запись</td><td><code>mw 0 r1</code></td><td>w[0] = r1</td></tr>
+        <tr><td><code>mr</code></td><td>чтение</td><td><code>mr r4 2</code></td><td>r4 = w[2]</td></tr>
+        <tr><td><code>+w −w *w /w</code></td><td>арифметика</td><td><code>+w 0 r4</code></td><td>w[0] = w[0] + r4</td></tr>
       </table>
+
+      <p><em>Пример фрагмента ({t8['fragment_note']}):</em></p>
       <pre class="code">{html_escape(t8['fragment'])}</pre>
+      <p><em>Пример вычисления f(x) ({t8['f_fragment_note']}):</em></p>
+      <pre class="code">{html_escape(t8['f_fragment'])}</pre>
       <p class="solution-label">Программа:</p><div class="solution-space large"></div>
     </div>
   </div>
@@ -1073,8 +1303,7 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 
 ## Задание 8 (15 баллов)
 
-{t8['title'].capitalize()} найти корень ${t8['eq_tex'].replace('$','')}$. Массив $w[]$, не стек.  
-Вход: {t8['input']}. Выход: {t8['output']}.
+{task8_md_body(t8)}
 
 ---
 
