@@ -1168,25 +1168,47 @@ EXCHANGE_DATA = [
 ]
 
 
-def build_variant(num: int) -> dict:
+def _variant_indices(num: int) -> dict[str, int]:
+    """Pick task indices; variants 17+ are new mixes."""
     i = num - 5
-    t1_tex, t1_html, t1_ans = task1_answer(TASK1_SPECS[i])
-    a2 = TASK2_A[i]
+    if i < 12:
+        return {
+            "t1": i, "t2": i, "t3": i, "t4": i,
+            "t5": i, "t6": i, "t7": i, "t8": i,
+        }
+    base = i % 12
+    return {
+        "t1": base,
+        "t2": (base + 4) % 12,
+        "t3": (base + 6) % 12,
+        "t4": (base + 8) % 12,
+        "t5": (base + 3) % 12,
+        "t6": (base + 5) % 12,
+        "t7": (base + 7) % 12,
+        "t8": (base + 9) % 12,
+    }
+
+
+def build_variant(num: int) -> dict:
+    idx = _variant_indices(num)
+    i4 = idx["t4"]
+    t1_tex, t1_html, t1_ans = task1_answer(TASK1_SPECS[idx["t1"]])
+    a2 = TASK2_A[idx["t2"]]
     t2_ans = task2_count(a2)
-    t3_text, t3_ans = TASK3[i]
-    fp, fk, p2t, k3t, p0, k0 = TASK4[i]
+    t3_text, t3_ans = TASK3[idx["t3"]]
+    fp, fk, p2t, k3t, p0, k0 = TASK4[i4]
     # fix degenerate task4 entries
     if p0 == p2t and k0 == k3t and fp == sp.Rational(1, 5) and fk == sp.Rational(2, 7):
         p2t, k3t, p0, k0 = 875, 525, 1310, 111
     if p0 == p2t and fp == sp.Rational(1, 6):
         p2t, k3t, p0, k0 = 770, 560, 440, 939
-    t5 = build_task5(i)
-    t6 = TASK6[i]
-    reg = REGION_CONFIGS[i]
-    t8 = build_task8(TASK8_SPECS[i])
-    n1, n2, item = NAMES[i]
-    ef1, ef2, _, _ = EXCHANGE_FRAC[i]
-    p2t, k3t, p0, k0 = EXCHANGE_DATA[i]
+    t5 = build_task5(idx["t5"])
+    t6 = TASK6[idx["t6"]]
+    reg = REGION_CONFIGS[idx["t7"]]
+    t8 = build_task8(TASK8_SPECS[idx["t8"]])
+    n1, n2, item = NAMES[i4]
+    ef1, ef2, _, _ = EXCHANGE_FRAC[i4]
+    p2t, k3t, p0, k0 = EXCHANGE_DATA[i4]
 
   # verify region tests
     ty, tn = reg["test_yes"], reg["test_no"]
@@ -1638,7 +1660,7 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 
 def main():
     variants = []
-    for num in range(5, 17):
+    for num in range(5, 19):
         try:
             v = build_variant(num)
             variants.append(v)
@@ -1650,7 +1672,7 @@ def main():
         print(f"variant-{num} OK  t1={v['t1_ans']} t2={v['t2_ans']}")
 
     # answers key
-    lines = ["# Ключ ответов (варианты 5–16)\n", "| Вар. | 1 | 2 | 3 | 4 | 5а | 5б | 8 |", "|------|---|---|---|---|----|----|---|"]
+    lines = ["# Ключ ответов (варианты 5–18)\n", "| Вар. | 1 | 2 | 3 | 4 | 5а | 5б | 8 |", "|------|---|---|---|---|----|----|---|"]
     for v in variants:
         n1, n2, _, _, _, _, _, p0, k0 = v["t4"]
         x5, q5 = v["t5"]["x5"], v["t5"]["q5"]
@@ -1672,7 +1694,9 @@ def main():
             )
         else:
             lines.append(f"| {v['num']} | — | численно | {t8['answer'].replace('$', '')} |")
-    (OUT / "answers-key-5-16.md").write_text("\n".join(lines), encoding="utf-8")
+    key_text = "\n".join(lines)
+    (OUT / "answers-key-5-18.md").write_text(key_text, encoding="utf-8")
+    (OUT / "answers-key-5-16.md").write_text(key_text, encoding="utf-8")
     print("done")
 
 
