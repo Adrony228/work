@@ -59,32 +59,132 @@ def _combined_x_intervals(cfg: dict, n: int = 2000) -> list[tuple[float, float]]
     return intervals
 
 
+def _scan_intervals(predicate, x_lo: float, x_hi: float, n: int = 5000) -> list[tuple[float, float]]:
+    intervals: list[tuple[float, float]] = []
+    start: float | None = None
+    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
+    x = x_lo
+    while x <= x_hi + 1e-9:
+        if predicate(x):
+            if start is None:
+                start = x
+        elif start is not None:
+            intervals.append((start, x - step))
+            start = None
+        x += step
+    if start is not None:
+        intervals.append((start, x_hi))
+    return intervals
+
+
+def _intersect_intervals(
+    a_list: list[tuple[float, float]],
+    b_list: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    result: list[tuple[float, float]] = []
+    for a0, a1 in a_list:
+        for b0, b1 in b_list:
+            lo, hi = max(a0, b0), min(a1, b1)
+            if lo <= hi + 1e-9:
+                result.append((lo, hi))
+    return result
+
+
+def _clip_intervals(
+    intervals: list[tuple[float, float]],
+    clip: list[tuple[float, float]],
+    min_width: float = 0.08,
+) -> list[tuple[float, float]]:
+    clipped: list[tuple[float, float]] = []
+    for a0, a1 in intervals:
+        for c0, c1 in clip:
+            lo, hi = max(a0, c0), min(a1, c1)
+            if hi - lo >= min_width:
+                clipped.append((lo, hi))
+    return clipped
+
+
+def _crossing_x(f, g, x_lo: float, x_hi: float, n: int = 8000) -> list[float]:
+    pts: list[float] = []
+    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
+    x = x_lo
+    prev = f(x) - g(x)
+    while x <= x_hi + 1e-9:
+        cur = f(x) - g(x)
+        if prev * cur < 0:
+            a, b = x - step, x
+            for _ in range(50):
+                m = (a + b) / 2
+                if (f(m) - g(m)) * prev < 0:
+                    b = m
+                else:
+                    a = m
+            pts.append((a + b) / 2)
+        prev = cur
+        x += step
+    return pts
+
+
+def _split_interval(x0: float, x1: float, cuts: list[float]) -> list[tuple[float, float]]:
+    pts = [x0] + sorted(c for c in cuts if x0 + 1e-9 < c < x1 - 1e-9) + [x1]
+    return [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+
+
+def _pick_mid(fn) -> float:
+    return fn
+
+
 def compute_regions(cfg: dict) -> list[dict]:
-    """2–3 закрашенные подобласти — разбиение по x с теми же граничными кривыми."""
+    """Подобласти между парами кривых; граница — линия пересечения функций."""
     if cfg.get("regions"):
         return cfg["regions"]
 
-    intervals = _combined_x_intervals(cfg)
-    if not intervals:
-        return [{"x_range": cfg["x_range"]}]
+    combined = _combined_x_intervals(cfg)
+    if not combined:
+        return []
 
-    x0, x1 = max(intervals, key=lambda iv: iv[1] - iv[0])
-    width = x1 - x0
-    n_parts = 3 if width > 2.0 else 2
-    edges = [x0 + width * i / n_parts for i in range(n_parts + 1)]
-    return [{"x_range": (edges[i], edges[i + 1])} for i in range(n_parts)]
+    cx0, cx1 = max(combined, key=lambda iv: iv[1] - iv[0])
+    scan_lo, scan_hi = cx0 - 0.1, cx1 + 0.1
+    lowers, uppers = cfg["lower_fns"], cfg["upper_fns"]
+    regions: list[dict] = []
+
+    if len(lowers) == 1 and len(uppers) >= 2:
+        cuts: list[float] = []
+        for i in range(len(uppers)):
+            for j in range(i + 1, len(uppers)):
+                cuts.extend(_crossing_x(uppers[i], uppers[j], scan_lo, scan_hi))
+        for x0, x1 in _clip_intervals(_split_interval(cx0, cx1, cuts), combined):
+            mid = (x0 + x1) / 2
+            ui = min(
+                range(len(uppers)),
+                key=lambda i: uppers[i](mid),
+            )
+            if lowers[0](mid) <= uppers[ui](mid) + 1e-9:
+                regions.append({"lower": [0], "upper": [ui], "x_range": (x0, x1)})
+
+    elif len(lowers) >= 2 and len(uppers) == 1:
+        cuts = []
+        for i in range(len(lowers)):
+            for j in range(i + 1, len(lowers)):
+                cuts.extend(_crossing_x(lowers[i], lowers[j], scan_lo, scan_hi))
+        for x0, x1 in _clip_intervals(_split_interval(cx0, cx1, cuts), combined):
+            mid = (x0 + x1) / 2
+            li = max(
+                range(len(lowers)),
+                key=lambda i: lowers[i](mid),
+            )
+            if lowers[li](mid) <= uppers[0](mid) + 1e-9:
+                regions.append({"lower": [li], "upper": [0], "x_range": (x0, x1)})
+
+    else:
+        regions.append({"x_range": (cx0, cx1)})
+
+    return regions
 
 
 def in_region(x: float, y: float, cfg: dict) -> bool:
-    for sub in compute_regions(cfg):
-        if "x_range" in sub:
-            xr = sub["x_range"]
-            if not (xr[0] - 1e-9 <= x <= xr[1] + 1e-9):
-                continue
-        lo, hi = _region_bounds(x, cfg, sub)
-        if lo - 1e-9 <= y <= hi + 1e-9:
-            return True
-    return False
+    lo, hi = _region_bounds(x, cfg)
+    return lo - 1e-9 <= y <= hi + 1e-9
 
 
 def find_region_polygon(cfg: dict, sub: dict | None = None, n: int = 400) -> list[tuple[float, float]]:
