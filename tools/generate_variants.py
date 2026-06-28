@@ -59,148 +59,23 @@ def _combined_x_intervals(cfg: dict, n: int = 2000) -> list[tuple[float, float]]
     return intervals
 
 
-def _crossing_x(f, g, x_lo: float, x_hi: float, n: int = 8000) -> list[float]:
-    pts: list[float] = []
-    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
-    x = x_lo
-    prev = f(x) - g(x)
-    tol = 1e-8
-    if abs(prev) <= tol:
-        pts.append(x)
-    while x <= x_hi + 1e-9:
-        cur = f(x) - g(x)
-        if abs(cur) <= tol:
-            pts.append(x)
-        elif prev * cur < 0:
-            a, b = x - step, x
-            for _ in range(50):
-                m = (a + b) / 2
-                if (f(m) - g(m)) * prev < 0:
-                    b = m
-                else:
-                    a = m
-            pts.append((a + b) / 2)
-        prev = cur
-        x += step
-    return _unique_sorted(pts)
-
-
-def _unique_sorted(xs: list[float], eps: float = 1e-4) -> list[float]:
-    xs = sorted(xs)
-    out: list[float] = []
-    for x in xs:
-        if not out or abs(x - out[-1]) > eps:
-            out.append(x)
-    return out
-
-
-def _interval_overlap(a: tuple[float, float], b: tuple[float, float]) -> float:
-    return max(0.0, min(a[1], b[1]) - max(a[0], b[0]))
-
-
-def _interval_area(lower_fn, upper_fn, x0: float, x1: float, n: int = 120) -> float:
-    if x1 <= x0:
-        return 0.0
-    step = (x1 - x0) / n
-    area = 0.0
-    x = x0
-    prev = max(0.0, upper_fn(x) - lower_fn(x))
-    for _ in range(n):
-        x_next = x + step
-        cur = max(0.0, upper_fn(x_next) - lower_fn(x_next))
-        area += (prev + cur) * 0.5 * step
-        x = x_next
-        prev = cur
-    return area
-
-
 def compute_regions(cfg: dict) -> list[dict]:
-    """Подобласти между парами функций (без вертикального разреза по x)."""
+    """Разные подобласти как разные системы неравенств."""
     if cfg.get("regions"):
         return cfg["regions"]
-
-    combined = _combined_x_intervals(cfg)
-    if not combined:
-        return []
-
-    scan_lo = cfg["plot_x"][0] - 1.0
-    scan_hi = cfg["plot_x"][1] + 1.0
-
-    curves = []
-    for fn in cfg["lower_fns"] + cfg["upper_fns"]:
-        if all(id(fn) != id(existing) for existing in curves):
-            curves.append(fn)
-
-    candidates: list[dict] = []
-    for i in range(len(curves)):
-        for j in range(i + 1, len(curves)):
-            cuts = _crossing_x(curves[i], curves[j], scan_lo, scan_hi)
-            if len(cuts) < 2:
-                continue
-            for k in range(len(cuts) - 1):
-                x0, x1 = cuts[k], cuts[k + 1]
-                if x1 - x0 < 0.12:
-                    continue
-                mid = (x0 + x1) / 2
-                if curves[i](mid) <= curves[j](mid):
-                    lo_fn, hi_fn = curves[i], curves[j]
-                else:
-                    lo_fn, hi_fn = curves[j], curves[i]
-                area = _interval_area(lo_fn, hi_fn, x0, x1)
-                if area > 0.08:
-                    candidates.append(
-                        {
-                            "lower_fn": lo_fn,
-                            "upper_fn": hi_fn,
-                            "x_range": (x0, x1),
-                            "_area": area,
-                        }
-                    )
-
-    if not candidates:
-        cx0 = min(iv[0] for iv in combined)
-        cx1 = max(iv[1] for iv in combined)
-        return [{"x_range": (cx0, cx1)}]
-
-    ty = cfg["test_yes"]
-    tn = cfg["test_no"]
-
-    def contains(cand: dict, pt: tuple[float, float]) -> bool:
-        x, y = pt
-        x0, x1 = cand["x_range"]
-        if not (x0 - 1e-9 <= x <= x1 + 1e-9):
-            return False
-        lo, hi = cand["lower_fn"](x), cand["upper_fn"](x)
-        return lo - 1e-9 <= y <= hi + 1e-9
-
-    def rank_key(cand: dict) -> tuple[int, int, float]:
-        return (
-            1 if contains(cand, ty) else 0,
-            1 if not contains(cand, tn) else 0,
-            cand["_area"],
-        )
-
-    # Берём 2–3 крупнейшие (с приоритетом A внутри и B снаружи).
-    selected: list[dict] = []
-    for cand in sorted(candidates, key=rank_key, reverse=True):
-        xr = cand["x_range"]
-        if any(_interval_overlap(xr, s["x_range"]) > 0.55 for s in selected):
-            continue
-        selected.append(cand)
-        if len(selected) == 3:
-            break
-
-    if len(selected) < 2:
-        for cand in sorted(candidates, key=rank_key, reverse=True):
-            if cand in selected:
-                continue
-            selected.append(cand)
-            if len(selected) == 2:
-                break
-
-    for r in selected:
-        r.pop("_area", None)
-    return selected
+    n_lower = len(cfg["lower_fns"])
+    n_upper = len(cfg["upper_fns"])
+    if n_lower == 1 and n_upper >= 2:
+        return [
+            {"lower": [0], "upper": [ui], "active_upper": ui}
+            for ui in range(n_upper)
+        ]
+    if n_upper == 1 and n_lower >= 2:
+        return [
+            {"lower": [li], "upper": [0], "active_lower": li}
+            for li in range(n_lower)
+        ]
+    return [{"lower": list(range(n_lower)), "upper": list(range(n_upper))}]
 
 
 def in_region(x: float, y: float, cfg: dict) -> bool:
@@ -208,38 +83,60 @@ def in_region(x: float, y: float, cfg: dict) -> bool:
     return lo - 1e-9 <= y <= hi + 1e-9
 
 
-def _sub_bounds(x: float, cfg: dict, sub: dict | None) -> tuple[float, float]:
-    if sub and "lower_fn" in sub and "upper_fn" in sub:
-        return sub["lower_fn"](x), sub["upper_fn"](x)
+def _in_subregion_x(x: float, cfg: dict, sub: dict, eps: float = 1e-9) -> bool:
+    if "active_upper" in sub:
+        i = sub["active_upper"]
+        fx = cfg["upper_fns"][i](x)
+        for j, fn in enumerate(cfg["upper_fns"]):
+            if j != i and fx > fn(x) + eps:
+                return False
+    if "active_lower" in sub:
+        i = sub["active_lower"]
+        fx = cfg["lower_fns"][i](x)
+        for j, fn in enumerate(cfg["lower_fns"]):
+            if j != i and fx < fn(x) - eps:
+                return False
+    return True
+
+
+def _sub_bounds(x: float, cfg: dict, sub: dict) -> tuple[float, float]:
     return _region_bounds(x, cfg, sub)
 
 
-def find_region_polygon(cfg: dict, sub: dict | None = None, n: int = 400) -> list[tuple[float, float]]:
-    if sub and "x_range" in sub:
-        x_lo, x_hi = sub["x_range"]
-    else:
-        x_lo, x_hi = cfg["x_range"]
-    xs = []
+def find_region_polygons(cfg: dict, sub: dict, n: int = 500) -> list[list[tuple[float, float]]]:
+    x_lo, x_hi = cfg["x_range"]
+    if x_hi <= x_lo:
+        return []
+    step = (x_hi - x_lo) / n
+    segments: list[list[float]] = []
+    xs: list[float] = []
     x = x_lo
-    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
     while x <= x_hi + 1e-9:
         lo, hi = _sub_bounds(x, cfg, sub)
-        if lo <= hi + 1e-9:
+        ok = _in_subregion_x(x, cfg, sub) and lo <= hi + 1e-9
+        if ok:
             xs.append(x)
+        elif xs:
+            segments.append(xs)
+            xs = []
         x += step
-    if not xs:
-        return []
-    upper_pts = [(x, _sub_bounds(x, cfg, sub)[1]) for x in xs]
-    lower_pts = [(x, _sub_bounds(x, cfg, sub)[0]) for x in reversed(xs)]
-    return upper_pts + lower_pts
+    if xs:
+        segments.append(xs)
+
+    polys: list[list[tuple[float, float]]] = []
+    for seg in segments:
+        if len(seg) < 2:
+            continue
+        upper_pts = [(x, _sub_bounds(x, cfg, sub)[1]) for x in seg]
+        lower_pts = [(x, _sub_bounds(x, cfg, sub)[0]) for x in reversed(seg)]
+        polys.append(upper_pts + lower_pts)
+    return polys
 
 
 def find_all_region_polygons(cfg: dict) -> list[list[tuple[float, float]]]:
     polys = []
     for sub in compute_regions(cfg):
-        poly = find_region_polygon(cfg, sub)
-        if poly:
-            polys.append(poly)
+        polys.extend(find_region_polygons(cfg, sub))
     return polys
 
 
