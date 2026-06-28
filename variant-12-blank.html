@@ -255,8 +255,8 @@ print(mn)</pre><div class="figure-caption">Рис. а</div></div>
   <div class="task">
     <div class="task-head"><span class="task-num">Задание 8</span><span class="task-pts">(15 баллов, компьютер)</span></div>
     <div class="task-body">
-      <p>Разработайте программу для исполнителя «Сириус», которая <strong>методом Ньютона</strong> находит приближённый корень уравнения <em>f(x) = x⁴ + x² − 3x − 1</em> = 0 с точностью ε = 0,001.</p>
-      <p><strong>Вход:</strong> <em>r</em>1 — начальное приближение (1,7), <em>r</em>2 — требуемая точность ε (0,001), <em>r</em>3 — максимальное число итераций (20).<br><strong>Выход:</strong> приближённое значение корня в регистре r5.</p>
+      <p>Разработайте программу для исполнителя «Сириус», которая <strong>методом Ньютона</strong> находит приближённый корень уравнения <em>f(x) = x⁴ − 8x² + 15</em> = 0 с точностью ε = 0,001.</p>
+      <p><strong>Вход:</strong> <em>r</em>1 — начальное приближение (1,5), <em>r</em>2 — требуемая точность ε (0,001), <em>r</em>3 — максимальное число итераций (20).<br><strong>Выход:</strong> приближённое значение корня в регистре r5.</p>
       <p>Назначение ячеек массива: <em>w</em>[0] — текущее <em>x</em>, <em>w</em>[1] — <em>f</em>(<em>x</em>), <em>w</em>[2] — <em>f</em>′(<em>x</em>), <em>w</em>[3] — новое приближение.</p>
       <p class="isa-note"><strong>Обязательно:</strong><ol style="margin:2mm 0 0 5mm;padding:0;"><li>На каждой итерации храните в <strong>массиве памяти</strong> <em>w</em>[] значения <em>x</em>, <em>f</em>(<em>x</em>), <em>f</em>′(<em>x</em>) и новое приближение — не в стеке.</li><li>Обновляйте как минимум <em>w</em>[0]–<em>w</em>[3] на каждом шаге.</li><li>Остановка: |<em>f</em>(<em>x</em>)| &lt; ε или достигнут лимит итераций <em>r</em>3.</li></ol></p>
 
@@ -282,18 +282,14 @@ m r0 r5
 m r5 r4
 m r7 2
 ^ r5 r7
-+ r0 r5
-m r5 r4
-m r7 3
+m r7 8
 * r5 r7
 m r7 0
 - r7 r5
 m r5 r7
 - r0 r5
-m r5 0
-m r7 1
-- r5 r7
-- r0 r5
+m r5 15
++ r0 r5
 mw 1 r0</pre>
       <p class="solution-label">Программа:</p><div class="solution-space large"></div>
     </div>

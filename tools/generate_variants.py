@@ -705,20 +705,124 @@ m r7 2
 / r0 r7
 mw 2 r0"""
 
+
+def _exact_tex(root) -> str:
+    return sp.latex(sp.simplify(root), symbol_names={_X: "x"})
+
+
+def _exact_html(root) -> str:
+    if root == int(root) and abs(root) < 10_000:
+        return str(int(root))
+    s = sp.latex(sp.simplify(root))
+    return (
+        s.replace("\\sqrt", "√")
+        .replace("{", "")
+        .replace("}", "")
+        .replace("\\,", " ")
+    )
+
+
+# method, expr, numeric params, exact root (sympy), substitution note for answer key
+# ≥7 задач с точным корнем через замену t = x² или t = x − k
 TASK8_SPECS = [
+    {
+        "method": "bisection",
+        "expr": _X**4 - 5 * _X**2 + 4,
+        "a": 0.5, "b": 1.5, "eps": 0.001,
+        "exact_root": sp.Integer(1),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 - 5t + 4 = 0 \Rightarrow t \in \{1;\,4\} \Rightarrow x = \pm 1,\,\pm 2",
+        "substitution_plain": "замена t = x² → t² − 5t + 4 = 0 → t = 1 или 4 → x = ±1, ±2",
+    },
+    {
+        "method": "newton",
+        "expr": _X**4 - 10 * _X**2 + 9,
+        "x0": 0.8, "eps": 0.001, "max_iter": 20,
+        "exact_root": sp.Integer(1),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 - 10t + 9 = 0 \Rightarrow t \in \{1;\,9\} \Rightarrow x = \pm 1,\,\pm 3",
+        "substitution_plain": "замена t = x² → t² − 10t + 9 = 0 → t = 1 или 9 → x = ±1, ±3",
+    },
+    {
+        "method": "bisection",
+        "expr": _X**4 + _X**2 - 6,
+        "a": 1.3, "b": 1.5, "eps": 0.001,
+        "exact_root": sp.sqrt(2),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 + t - 6 = 0 \Rightarrow t = 2 \Rightarrow x = \pm\sqrt{2}",
+        "substitution_plain": "замена t = x² → t² + t − 6 = 0 → t = 2 → x = ±√2",
+    },
+    {
+        "method": "newton",
+        "expr": _X**4 - 13 * _X**2 + 36,
+        "x0": 1.5, "eps": 0.001, "max_iter": 20,
+        "exact_root": sp.Integer(2),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 - 13t + 36 = 0 \Rightarrow t \in \{4;\,9\} \Rightarrow x = \pm 2,\,\pm 3",
+        "substitution_plain": "замена t = x² → t² − 13t + 36 = 0 → t = 4 или 9 → x = ±2, ±3",
+    },
+    {
+        "method": "bisection",
+        "expr": _X**3 - 6 * _X**2 + 11 * _X - 6,
+        "a": 1.5, "b": 2.5, "eps": 0.001,
+        "exact_root": sp.Integer(2),
+        "substitution_tex": r"t = x - 2 \Rightarrow t^3 - t = 0 \Rightarrow t \in \{-1;\,0;\,1\} \Rightarrow x \in \{1;\,2;\,3\}",
+        "substitution_plain": "замена t = x − 2 → t³ − t = 0 → t = −1, 0 или 1 → x = 1, 2 или 3",
+    },
+    {
+        "method": "newton",
+        "expr": _X**3 - 7 * _X + 6,
+        "x0": 2.5, "eps": 0.001, "max_iter": 20,
+        "exact_root": sp.Integer(2),
+        "substitution_tex": r"t = x - 1 \Rightarrow t^3 + 3t^2 - 4t = 0 \Rightarrow t \in \{-4;\,0;\,1\} \Rightarrow x \in \{-3;\,1;\,2\}",
+        "substitution_plain": "замена t = x − 1 → t³ + 3t² − 4t = 0 → t = −4, 0 или 1 → x = −3, 1 или 2",
+    },
+    {
+        "method": "bisection",
+        "expr": _X**4 - 4 * _X**2 + 3,
+        "a": 0.5, "b": 1.5, "eps": 0.001,
+        "exact_root": sp.Integer(1),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 - 4t + 3 = 0 \Rightarrow t \in \{1;\,3\} \Rightarrow x = \pm 1,\,\pm\sqrt{3}",
+        "substitution_plain": "замена t = x² → t² − 4t + 3 = 0 → t = 1 или 3 → x = ±1, ±√3",
+    },
+    {
+        "method": "newton",
+        "expr": _X**4 - 8 * _X**2 + 15,
+        "x0": 1.5, "eps": 0.001, "max_iter": 20,
+        "exact_root": sp.sqrt(3),
+        "substitution_tex": r"t = x^2 \Rightarrow t^2 - 8t + 15 = 0 \Rightarrow t \in \{3;\,5\} \Rightarrow x = \pm\sqrt{3},\,\pm\sqrt{5}",
+        "substitution_plain": "замена t = x² → t² − 8t + 15 = 0 → t = 3 или 5 → x = ±√3, ±√5",
+    },
+    # без точной замены — только численный корень
     {"method": "bisection", "expr": _X**3 - 3 * _X - 1, "a": 1, "b": 2, "eps": 0.001},
     {"method": "newton", "expr": _X**3 - 2 * _X - 5, "x0": 2.5, "eps": 0.001, "max_iter": 20},
     {"method": "bisection", "expr": _X**4 - 3 * _X - 1, "a": 1, "b": 2, "eps": 0.001},
     {"method": "newton", "expr": _X**4 - 2 * _X - 1, "x0": 1.6, "eps": 0.001, "max_iter": 20},
-    {"method": "bisection", "expr": 2 * _X**3 - 5 * _X + 3, "a": -2, "b": -1, "eps": 0.001},
-    {"method": "newton", "expr": _X**3 - 2 * _X**2 - 1, "x0": 2.5, "eps": 0.001, "max_iter": 20},
-    {"method": "bisection", "expr": _X**4 - 3 * _X**2 + _X - 1, "a": 1, "b": 2, "eps": 0.001},
-    {"method": "newton", "expr": _X**4 + _X**2 - 3 * _X - 1, "x0": 1.7, "eps": 0.001, "max_iter": 20},
-    {"method": "bisection", "expr": _X**4 + _X**2 - 6, "a": 1, "b": 2, "eps": 0.001},
-    {"method": "newton", "expr": 3 * _X**3 - 7 * _X + 2, "x0": 2.0, "eps": 0.001, "max_iter": 20},
-    {"method": "bisection", "expr": _X**4 - 4 * _X**3 + 3, "a": 3, "b": 4, "eps": 0.001},
-    {"method": "newton", "expr": _X**4 - _X**3 - 3 * _X - 1, "x0": 2.0, "eps": 0.001, "max_iter": 20},
 ]
+
+
+def _task8_answer_meta(spec: dict, num_root: float) -> dict:
+    approx = _fmt_num(round(num_root, 3))
+    if "exact_root" not in spec:
+        return {
+            "has_substitution": False,
+            "answer": f"$\\approx {approx}$",
+            "answer_key": f"$\\approx {approx}$",
+            "answer_note": f"корень $\\approx {approx}$ (численно); массив $w[]$",
+            "numerical_note": f"программа: $\\approx {approx}$",
+        }
+    exact = sp.simplify(spec["exact_root"])
+    exact_tex = _exact_tex(exact)
+    return {
+        "has_substitution": True,
+        "exact_root_tex": exact_tex,
+        "exact_root_html": _exact_html(exact),
+        "substitution_tex": spec["substitution_tex"],
+        "substitution_plain": spec["substitution_plain"],
+        "answer": f"${exact_tex}$",
+        "answer_key": f"${exact_tex}$ (${spec['substitution_plain']}; программа $\\approx {approx}$)",
+        "answer_note": (
+            f"точный корень ${exact_tex}$; {spec['substitution_plain']}; "
+            f"программа $\\approx {approx}$"
+        ),
+        "numerical_note": f"программа: $\\approx {approx}$",
+    }
 
 
 def build_task8(spec: dict) -> dict:
@@ -726,6 +830,12 @@ def build_task8(spec: dict) -> dict:
     eq_html = expr_to_html(expr)
     eq_tex = expr_to_tex(expr)
     method = spec["method"]
+    common = {
+        "eq_html": eq_html,
+        "eq_tex": eq_tex,
+        "f_html": f"f(x) = {eq_html}",
+        "f_tex": f"f(x)={eq_tex}",
+    }
 
     if method == "bisection":
         a, b, eps = spec["a"], spec["b"], spec["eps"]
@@ -733,17 +843,12 @@ def build_task8(spec: dict) -> dict:
         if fa * fb >= 0:
             raise ValueError(f"bisection interval [{a}, {b}] has no sign change for {expr}")
         root = float(sp.nsolve(expr, _X, (a + b) / 2))
-        ans = f"\\approx {_fmt_num(round(root, 3))}"
-        fragment = BISECTION_INIT_FRAGMENT
-        fragment_note = "инициализация границ отрезка и вычисление середины"
-        f_fragment = gen_f_fragment(expr, x_cell=2, out_cell=3)
+        meta = _task8_answer_meta(spec, root)
         return {
+            **common,
+            **meta,
             "method": method,
             "method_title": "методом половинного деления",
-            "eq_html": eq_html,
-            "eq_tex": eq_tex,
-            "f_html": f"f(x) = {eq_html}",
-            "f_tex": f"f(x)={eq_tex}",
             "interval": (a, b),
             "interval_str": f"[{_fmt_num(a)}; {_fmt_num(b)}]",
             "eps": eps,
@@ -762,36 +867,31 @@ def build_task8(spec: dict) -> dict:
                 "$w[0]$ — левая граница, $w[1]$ — правая, $w[2]$ — середина, "
                 "$w[3]$ — $f$(середина)"
             ),
-        "requirements": [
-            "Промежуточные значения (границы, середина, значения функции) храните в массиве памяти w[0], w[1], … — не в стеке.",
-            "На каждой итерации обновляйте w[0], w[1], w[2], w[3].",
-            "Итерации выполняйте, пока |w[1] − w[0]| > ε.",
-        ],
-        "requirements_html": [
-            "Промежуточные значения (границы, середина, значения функции) храните в "
-            "<strong>массиве памяти</strong> <em>w</em>[0], <em>w</em>[1], … — не в стеке.",
-            "На каждой итерации обновляйте <em>w</em>[0], <em>w</em>[1], <em>w</em>[2], <em>w</em>[3].",
-            "Итерации выполняйте, пока |<em>w</em>[1] − <em>w</em>[0]| &gt; ε.",
-        ],
-            "fragment": fragment,
-            "fragment_note": fragment_note,
-            "f_fragment": f_fragment,
+            "requirements": [
+                "Промежуточные значения (границы, середина, значения функции) храните в массиве памяти w[0], w[1], … — не в стеке.",
+                "На каждой итерации обновляйте w[0], w[1], w[2], w[3].",
+                "Итерации выполняйте, пока |w[1] − w[0]| > ε.",
+            ],
+            "requirements_html": [
+                "Промежуточные значения (границы, середина, значения функции) храните в "
+                "<strong>массиве памяти</strong> <em>w</em>[0], <em>w</em>[1], … — не в стеке.",
+                "На каждой итерации обновляйте <em>w</em>[0], <em>w</em>[1], <em>w</em>[2], <em>w</em>[3].",
+                "Итерации выполняйте, пока |<em>w</em>[1] − <em>w</em>[0]| &gt; ε.",
+            ],
+            "fragment": BISECTION_INIT_FRAGMENT,
+            "fragment_note": "инициализация границ отрезка и вычисление середины",
+            "f_fragment": gen_f_fragment(expr, x_cell=2, out_cell=3),
             "f_fragment_note": "вычисление f(x) в середине отрезка (x = w[2])",
-            "answer": f"${ans}$",
-            "answer_note": f"корень $\\approx {_fmt_num(round(root, 3))}$; массив $w[]$ для границ и $f$",
         }
 
     x0, eps, max_iter = spec["x0"], spec["eps"], spec["max_iter"]
     root = float(sp.nsolve(expr, _X, x0))
-    ans = f"\\approx {_fmt_num(round(root, 3))}"
-    f_fragment = gen_f_fragment(expr, x_cell=0, out_cell=1)
+    meta = _task8_answer_meta(spec, root)
     return {
+        **common,
+        **meta,
         "method": method,
         "method_title": "методом Ньютона",
-        "eq_html": eq_html,
-        "eq_tex": eq_tex,
-        "f_html": f"f(x) = {eq_html}",
-        "f_tex": f"f(x)={eq_tex}",
         "x0": x0,
         "eps": eps,
         "max_iter": max_iter,
@@ -822,10 +922,8 @@ def build_task8(spec: dict) -> dict:
         ],
         "fragment": "mw 0 r1",
         "fragment_note": "запись начального приближения в w[0]",
-        "f_fragment": f_fragment,
+        "f_fragment": gen_f_fragment(expr, x_cell=0, out_cell=1),
         "f_fragment_note": "вычисление f(x) при x = w[0]",
-        "answer": f"${ans}$",
-        "answer_note": f"корень $\\approx {_fmt_num(round(root, 3))}$; массив $w[]$ для итераций Ньютона",
     }
 
 
@@ -901,6 +999,18 @@ def build_variant(num: int) -> dict:
         "t7_svg": make_svg(reg),
         "t8": t8,
     }
+
+
+def task8_answer_row(t8: dict) -> str:
+    if t8.get("has_substitution"):
+        return f"{t8['answer']}; {t8['substitution_plain']}; {t8['numerical_note']}"
+    return t8["answer"]
+
+
+def task8_answer_key_cell(t8: dict) -> str:
+    if t8.get("has_substitution"):
+        return t8["exact_root_tex"]
+    return t8["answer"].replace("$", "")
 
 
 def task8_problem_html(t8: dict) -> str:
@@ -1319,7 +1429,7 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 | 5б | ${q5}$ |
 | 6 | {t6['errors']} |
 | 7 | см. условия выше |
-| 8 | {t8['answer']} |
+| 8 | {task8_answer_row(t8)} |
 """
 
 
@@ -1342,8 +1452,23 @@ def main():
         n1, n2, _, _, _, _, _, p0, k0 = v["t4"]
         x5, q5 = v["t5"][3], v["t5"][4]
         lines.append(
-            f"| {v['num']} | {v['t1_ans']} | {v['t2_ans']} | {v['t3_ans'].replace('$','')} | {p0}/{k0} | {x5} | {q5} | {v['t8']['answer'].replace('$','')} |"
+            f"| {v['num']} | {v['t1_ans']} | {v['t2_ans']} | {v['t3_ans'].replace('$','')} | {p0}/{k0} | {x5} | {q5} | {task8_answer_key_cell(v['t8'])} |"
         )
+    lines += [
+        "",
+        "## Задание 8 — точные корни (метод замены)",
+        "",
+        "| Вар. | Искомый корень | Замена | Программа (r5) |",
+        "|------|----------------|--------|----------------|",
+    ]
+    for v in variants:
+        t8 = v["t8"]
+        if t8.get("has_substitution"):
+            lines.append(
+                f"| {v['num']} | ${t8['exact_root_tex']}$ | {t8['substitution_plain']} | {t8['numerical_note'].replace('$', '')} |"
+            )
+        else:
+            lines.append(f"| {v['num']} | — | численно | {t8['answer'].replace('$', '')} |")
     (OUT / "answers-key-5-16.md").write_text("\n".join(lines), encoding="utf-8")
     print("done")
 
