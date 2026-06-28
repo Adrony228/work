@@ -19,37 +19,113 @@ OUT = ROOT
 # Task 7 region definitions
 # ---------------------------------------------------------------------------
 
-def in_region(x: float, y: float, cfg: dict) -> bool:
-    lo = max(fn(x) for fn in cfg["lower_fns"])
-    hi = min(fn(x) for fn in cfg["upper_fns"])
-    return lo - 1e-9 <= y <= hi + 1e-9
+REGION_FILL_COLORS = ("#b8d4f0", "#c8e6c9", "#ffe0b2")
+REGION_STROKE_COLORS = ("#2c5f8a", "#2e7d32", "#e65100")
 
 
-def find_region_polygon(cfg: dict, n: int = 400) -> list[tuple[float, float]]:
+def _region_bounds(x: float, cfg: dict, sub: dict | None = None) -> tuple[float, float]:
+    lower_idxs = (
+        sub["lower"]
+        if sub and "lower" in sub
+        else list(range(len(cfg["lower_fns"])))
+    )
+    upper_idxs = (
+        sub["upper"]
+        if sub and "upper" in sub
+        else list(range(len(cfg["upper_fns"])))
+    )
+    lo = max(cfg["lower_fns"][i](x) for i in lower_idxs)
+    hi = min(cfg["upper_fns"][i](x) for i in upper_idxs)
+    return lo, hi
+
+
+def _combined_x_intervals(cfg: dict, n: int = 2000) -> list[tuple[float, float]]:
     x_lo, x_hi = cfg["x_range"]
+    intervals: list[tuple[float, float]] = []
+    start: float | None = None
+    step = (x_hi - x_lo) / n
+    x = x_lo
+    while x <= x_hi + 1e-9:
+        lo, hi = _region_bounds(x, cfg)
+        ok = lo <= hi + 1e-9
+        if ok and start is None:
+            start = x
+        elif not ok and start is not None:
+            intervals.append((start, x - step))
+            start = None
+        x += step
+    if start is not None:
+        intervals.append((start, x_hi))
+    return intervals
+
+
+def compute_regions(cfg: dict) -> list[dict]:
+    """2–3 закрашенные подобласти — разбиение по x с теми же граничными кривыми."""
+    if cfg.get("regions"):
+        return cfg["regions"]
+
+    intervals = _combined_x_intervals(cfg)
+    if not intervals:
+        return [{"x_range": cfg["x_range"]}]
+
+    x0, x1 = max(intervals, key=lambda iv: iv[1] - iv[0])
+    width = x1 - x0
+    n_parts = 3 if width > 2.0 else 2
+    edges = [x0 + width * i / n_parts for i in range(n_parts + 1)]
+    return [{"x_range": (edges[i], edges[i + 1])} for i in range(n_parts)]
+
+
+def in_region(x: float, y: float, cfg: dict) -> bool:
+    for sub in compute_regions(cfg):
+        if "x_range" in sub:
+            xr = sub["x_range"]
+            if not (xr[0] - 1e-9 <= x <= xr[1] + 1e-9):
+                continue
+        lo, hi = _region_bounds(x, cfg, sub)
+        if lo - 1e-9 <= y <= hi + 1e-9:
+            return True
+    return False
+
+
+def find_region_polygon(cfg: dict, sub: dict | None = None, n: int = 400) -> list[tuple[float, float]]:
+    if sub and "x_range" in sub:
+        x_lo, x_hi = sub["x_range"]
+    else:
+        x_lo, x_hi = cfg["x_range"]
     xs = []
     x = x_lo
-    step = (x_hi - x_lo) / n
+    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
     while x <= x_hi + 1e-9:
-        lo = max(fn(x) for fn in cfg["lower_fns"])
-        hi = min(fn(x) for fn in cfg["upper_fns"])
-        if lo <= hi:
+        lo, hi = _region_bounds(x, cfg, sub)
+        if lo <= hi + 1e-9:
             xs.append(x)
         x += step
     if not xs:
         return []
-    upper_pts = [(x, min(fn(x) for fn in cfg["upper_fns"])) for x in xs]
-    lower_pts = [(x, max(fn(x) for fn in cfg["lower_fns"])) for x in reversed(xs)]
+    upper_pts = [(x, _region_bounds(x, cfg, sub)[1]) for x in xs]
+    lower_pts = [(x, _region_bounds(x, cfg, sub)[0]) for x in reversed(xs)]
     return upper_pts + lower_pts
+
+
+def find_all_region_polygons(cfg: dict) -> list[list[tuple[float, float]]]:
+    polys = []
+    for sub in compute_regions(cfg):
+        poly = find_region_polygon(cfg, sub)
+        if poly:
+            polys.append(poly)
+    return polys
 
 
 def make_svg(cfg: dict, width: int = 480, height: int = 400) -> str:
     """SVG in mathematical coordinates (как в бланке варианта 4), с авто-масштабом по области."""
-    poly = find_region_polygon(cfg)
+    polys = find_all_region_polygons(cfg)
     ty, tn = cfg["test_yes"], cfg["test_no"]
 
-    points = list(poly) + [ty, tn]
-    if poly:
+    points: list[tuple[float, float]] = []
+    for poly in polys:
+        points.extend(poly)
+    points += [ty, tn]
+    if points:
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
         span_x = max(xs) - min(xs) or 1
@@ -131,14 +207,16 @@ def make_svg(cfg: dict, width: int = 480, height: int = 400) -> str:
             )
         yi += y_step
 
-    # закрашенная область
-    if poly:
+    # закрашенные области
+    for idx, poly in enumerate(polys):
+        fill = REGION_FILL_COLORS[idx % len(REGION_FILL_COLORS)]
+        stroke = REGION_STROKE_COLORS[idx % len(REGION_STROKE_COLORS)]
         pd = " ".join(
             f"{'L' if i else 'M'} {x:.4f} {y:.4f}" for i, (x, y) in enumerate(poly)
         )
         parts.append(
-            f'<path d="{pd} Z" fill="#b8d4f0" fill-opacity="0.82" '
-            f'stroke="#2c5f8a" stroke-width="{sw_region:.4f}"/>'
+            f'<path d="{pd} Z" fill="{fill}" fill-opacity="0.82" '
+            f'stroke="{stroke}" stroke-width="{sw_region:.4f}"/>'
         )
 
     # кривые
@@ -220,7 +298,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 4", "y = 5 − x²", "y = 3 − 2x"],
         "x_range": (-2.2, 2.0), "plot_x": (-3, 3), "plot_y": (-4, 5),
         "test_yes": (-1, 2), "test_no": (1.5, 1.5),
-        "desc": ["$y \\ge x^2 - 4$", "$y \\le 5 - x^2$", "$y \\le 3 - 2x$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 3],
@@ -229,7 +306,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 3", "y = 4 − x²", "y = 2 − x"],
         "x_range": (-1.9, 1.85), "plot_x": (-3, 3), "plot_y": (-4, 5),
         "test_yes": (-1.5, 1.5), "test_no": (1.5, 1.5),
-        "desc": ["$y \\ge x^2 - 3$", "$y \\le 4 - x^2$", "$y \\le 2 - x$"],
     },
     {
         "lower_fns": [lambda x: -x**2 + 1, lambda x: x - 2],
@@ -238,7 +314,6 @@ REGION_CONFIGS = [
         "labels": ["y = −x² + 1", "y = 3 − x²", "y = x − 2"],
         "x_range": (-2.0, 1.85), "plot_x": (-3, 3), "plot_y": (-4, 4),
         "test_yes": (-1, 1), "test_no": (1.5, 1.5),
-        "desc": ["$y \\ge -x^2 + 1$", "$y \\le 3 - x^2$", "$y \\ge x - 2$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 5],
@@ -247,7 +322,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 5", "y = 2 − 2x²", "y = 1 − x"],
         "x_range": (-1.75, 1.75), "plot_x": (-3, 3), "plot_y": (-6, 4),
         "test_yes": (-0.2, -0.3), "test_no": (-1.9, -5.5),
-        "desc": ["$y \\ge x^2 - 5$", "$y \\le 2 - 2x^2$", "$y \\le 1 - x$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 2],
@@ -256,7 +330,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 2", "y = 6 − x²", "y = 4 − x"],
         "x_range": (-2.0, 2.0), "plot_x": (-3, 3), "plot_y": (-3, 7),
         "test_yes": (0, 1), "test_no": (2, 3),
-        "desc": ["$y \\ge x^2 - 2$", "$y \\le 6 - x^2$", "$y \\le 4 - x$"],
     },
     {
         "lower_fns": [lambda x: -x**2 + 2, lambda x: 2 * x - 1],
@@ -265,7 +338,6 @@ REGION_CONFIGS = [
         "labels": ["y = −x² + 2", "y = 4 − x²", "y = 2x − 1"],
         "x_range": (-1.5, 1.65), "plot_x": (-3, 3), "plot_y": (-3, 5),
         "test_yes": (-0.7, 2.6), "test_no": (-2.0, 1.9),
-        "desc": ["$y \\ge -x^2 + 2$", "$y \\le 4 - x^2$", "$y \\ge 2x - 1$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 1],
@@ -274,7 +346,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 1", "y = 5 − x²", "y = 3 − 1,5x"],
         "x_range": (-2.0, 1.9), "plot_x": (-3, 3), "plot_y": (-2, 6),
         "test_yes": (-1, 2), "test_no": (1.5, 0),
-        "desc": ["$y \\ge x^2 - 1$", "$y \\le 5 - x^2$", "$y \\le 3 - 1{,}5x$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 6],
@@ -283,7 +354,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 6", "y = 3 − x²", "y = −x"],
         "x_range": (-2.1, 2.1), "plot_x": (-3, 3), "plot_y": (-7, 4),
         "test_yes": (0, 0), "test_no": (2, 2),
-        "desc": ["$y \\ge x^2 - 6$", "$y \\le 3 - x^2$", "$y \\le -x$"],
     },
     {
         "lower_fns": [lambda x: -x**2, lambda x: x - 3],
@@ -292,7 +362,6 @@ REGION_CONFIGS = [
         "labels": ["y = −x²", "y = 2 − x²", "y = x − 3"],
         "x_range": (-1.8, 1.7), "plot_x": (-3, 3), "plot_y": (-4, 3),
         "test_yes": (-1, 0), "test_no": (1.5, 1),
-        "desc": ["$y \\ge -x^2$", "$y \\le 2 - x^2$", "$y \\ge x - 3$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 3],
@@ -301,7 +370,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 3", "y = 5 − 2x²", "y = 2 − x"],
         "x_range": (-1.6, 1.6), "plot_x": (-3, 3), "plot_y": (-4, 5),
         "test_yes": (-1, 1), "test_no": (1.5, 1.5),
-        "desc": ["$y \\ge x^2 - 3$", "$y \\le 5 - 2x^2$", "$y \\le 2 - x$"],
     },
     {
         "lower_fns": [lambda x: x**2 - 4],
@@ -310,7 +378,6 @@ REGION_CONFIGS = [
         "labels": ["y = x² − 4", "y = 4 − x²", "y = 1 − 2x"],
         "x_range": (-1.9, 1.5), "plot_x": (-3, 3), "plot_y": (-5, 5),
         "test_yes": (-1, 0), "test_no": (1.5, 1.5),
-        "desc": ["$y \\ge x^2 - 4$", "$y \\le 4 - x^2$", "$y \\le 1 - 2x$"],
     },
     {
         "lower_fns": [lambda x: -x**2 + 3, lambda x: x + 1],
@@ -319,7 +386,6 @@ REGION_CONFIGS = [
         "labels": ["y = −x² + 3", "y = 5 − x²", "y = x + 1"],
         "x_range": (-1.7, 1.7), "plot_x": (-3, 3), "plot_y": (-2, 6),
         "test_yes": (-0.5, 4.0), "test_no": (-2.1, 4.7),
-        "desc": ["$y \\ge -x^2 + 3$", "$y \\le 5 - x^2$", "$y \\ge x + 1$"],
     },
 ]
 
@@ -1288,8 +1354,6 @@ table.examples th { background: #eef2f6; }
 .figure-code { text-align: left; }
 .figure-code pre.code { margin-left: 0; margin-right: 0; }
 .figure-caption { font-size: 10pt; margin-top: 2mm; font-style: italic; text-align: center; }
-.region-conditions { font-size: 10.5pt; margin: 2mm 0 3mm 6mm; line-height: 1.4; }
-.region-conditions p { margin: 1mm 0; }
 .isa-note {
   border: 1px solid #bbb; background: #f8fafc; padding: 3mm 4mm;
   font-size: 10.5pt; margin: 3mm 0; border-radius: 2px; line-height: 1.4;
@@ -1415,15 +1479,13 @@ def render_blank(v: dict) -> str:
     <div class="task-head"><span class="task-num">Задание 7</span><span class="task-pts">(15 баллов, компьютер)</span></div>
     <div class="task-body">
       <p>Графики: <em>{reg['labels'][0]}</em>, <em>{reg['labels'][1]}</em>, <em>{reg['labels'][2]}</em>.
-      Закрашенная область — рис. б. Программа: точка (<em>x</em>, <em>y</em>) в области? → <code>YES</code>/<code>NO</code>.</p>
+      Закрашенные области — рис. б. Программа: точка (<em>x</em>, <em>y</em>) в одной из областей? → <code>YES</code>/<code>NO</code>.</p>
       <table class="examples">
         <tr><th>Ввод</th><th>Вывод</th></tr>
         <tr><td>{ty[0]} &nbsp; {ty[1]}</td><td>YES</td></tr>
         <tr><td>{tn[0]} &nbsp; {tn[1]}</td><td>NO</td></tr>
       </table>
-      <p>Область задана неравенствами:</p>
-      <div class="region-conditions">{''.join(f'<p>{html_escape(d.replace("$", "").replace("\\ge", "≥").replace("\\le", "≤"))}</p>' for d in reg['desc'])}</div>
-      <div class="figure figure-graph">{v['t7_svg']}<div class="figure-caption">Рис. б — закрашенная область (A — YES, B — NO)</div></div>
+      <div class="figure figure-graph">{v['t7_svg']}<div class="figure-caption">Рис. б — закрашенные области (A — YES, B — NO)</div></div>
     </div>
   </div>
 
@@ -1466,7 +1528,6 @@ def render_md(v: dict) -> str:
     reg = v["t7"]
     ty, tn = reg["test_yes"], reg["test_no"]
     t6, t8 = v["t6"], v["t8"]
-    desc7 = "\n".join(f"- {d}" for d in reg["desc"])
 
     return f"""# Вариант {n} — письменный экзамен
 
@@ -1520,14 +1581,12 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 
 ## Задание 7 (15 баллов)
 
-Графики: {', '.join(reg['labels'])}. Закрашенная область (см. `variant-{n}-blank.html`, рис. б).
+Графики: {', '.join(reg['labels'])}. Закрашенные области (см. `variant-{n}-blank.html`, рис. б).
 
 | Ввод | Вывод |
 |------|-------|
 | {ty[0]} {ty[1]} | YES |
 | {tn[0]} {tn[1]} | NO |
-
-{desc7}
 
 ---
 
