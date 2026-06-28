@@ -43,103 +43,173 @@ def find_region_polygon(cfg: dict, n: int = 400) -> list[tuple[float, float]]:
     return upper_pts + lower_pts
 
 
-def make_svg(cfg: dict, width: int = 420, height: int = 360) -> str:
-    x_min, x_max = cfg["plot_x"]
-    y_min, y_max = cfg["plot_y"]
-    margin_l, margin_r, margin_t, margin_b = 48, 24, 28, 44
-    pw = width - margin_l - margin_r
-    ph = height - margin_t - margin_b
+def make_svg(cfg: dict, width: int = 480, height: int = 400) -> str:
+    """SVG in mathematical coordinates (как в бланке варианта 4), с авто-масштабом по области."""
+    poly = find_region_polygon(cfg)
+    ty, tn = cfg["test_yes"], cfg["test_no"]
 
-    def tx(x):
-        return margin_l + (x - x_min) / (x_max - x_min) * pw
+    points = list(poly) + [ty, tn]
+    if poly:
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        span_x = max(xs) - min(xs) or 1
+        span_y = max(ys) - min(ys) or 1
+        pad_x = max(0.35, span_x * 0.22)
+        pad_y = max(0.35, span_y * 0.28)
+        x_min = min(xs) - pad_x
+        x_max = max(xs) + pad_x
+        y_min = min(ys) - pad_y
+        y_max = max(ys) + pad_y
+    else:
+        x_min, x_max = cfg["plot_x"]
+        y_min, y_max = cfg["plot_y"]
 
-    def ty(y):
-        return margin_t + (y_max - y) / (y_max - y_min) * ph
+    vb_w = x_max - x_min
+    vb_h = y_max - y_min
+    margin_x = vb_w * 0.10
+    margin_y = vb_h * 0.12
+    x_min_vb = x_min - margin_x
+    x_max_vb = x_max + margin_x
+    y_min_vb = y_min - margin_y
+    y_max_vb = y_max + margin_y
+    vb_w_full = x_max_vb - x_min_vb
+    vb_h_full = y_max_vb - y_min_vb
+    view_box = f"{x_min_vb:.4f} {y_min_vb:.4f} {vb_w_full:.4f} {vb_h_full:.4f}"
 
-    def curve_path(fn, x0, x1, steps=120):
+    def curve_path(fn, x0, x1, steps=200):
         pts = []
         for i in range(steps + 1):
             x = x0 + (x1 - x0) * i / steps
-            y = fn(x)
-            if y_min - 1 <= y <= y_max + 1:
-                pts.append((tx(x), ty(y)))
+            pts.append((x, fn(x)))
         if len(pts) < 2:
             return ""
-        d = f"M {pts[0][0]:.1f} {pts[0][1]:.1f}"
-        for px, py in pts[1:]:
-            d += f" L {px:.1f} {py:.1f}"
+        d = f"M {pts[0][0]:.4f} {pts[0][1]:.4f}"
+        for x, y in pts[1:]:
+            d += f" L {x:.4f} {y:.4f}"
         return d
 
-    poly = find_region_polygon(cfg)
+    sw_grid = max(vb_w_full, vb_h_full) * 0.004
+    sw_axis = sw_grid * 2.2
+    sw_curve = sw_grid * 2.8
+    sw_region = sw_grid * 1.6
+    fs_label = max(vb_w_full, vb_h_full) * 0.055
+    fs_tick = max(vb_w_full, vb_h_full) * 0.042
+    r_pt = max(vb_w_full, vb_h_full) * 0.018
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="{view_box}" role="img" aria-label="График задания 7" '
+        f'style="border:1px solid #333;background:#fff">',
+    ]
+
+    # сетка
+    x_step = 0.5 if vb_w <= 4 else 1.0
+    y_step = 0.5 if vb_h <= 4 else 1.0
+    xi = math.floor(x_min / x_step) * x_step
+    while xi <= x_max + 1e-9:
+        parts.append(
+            f'<line x1="{xi:.4f}" y1="{y_min:.4f}" x2="{xi:.4f}" y2="{y_max:.4f}" '
+            f'stroke="#e0e0e0" stroke-width="{sw_grid:.4f}"/>'
+        )
+        if abs(xi) > 0.05 or abs(xi) < 1e-9:
+            parts.append(
+                f'<text x="{xi:.4f}" y="{y_max + vb_h * 0.05:.4f}" text-anchor="middle" '
+                f'font-size="{fs_tick:.4f}" font-family="Times New Roman" fill="#444">{xi:g}</text>'
+            )
+        xi += x_step
+
+    yi = math.floor(y_min / y_step) * y_step
+    while yi <= y_max + 1e-9:
+        parts.append(
+            f'<line x1="{x_min:.4f}" y1="{yi:.4f}" x2="{x_max:.4f}" y2="{yi:.4f}" '
+            f'stroke="#e0e0e0" stroke-width="{sw_grid:.4f}"/>'
+        )
+        if abs(yi) > 0.05:
+            parts.append(
+                f'<text x="{x_min - vb_w * 0.04:.4f}" y="{yi + fs_tick * 0.3:.4f}" text-anchor="end" '
+                f'font-size="{fs_tick:.4f}" font-family="Times New Roman" fill="#444">{yi:g}</text>'
+            )
+        yi += y_step
+
+    # закрашенная область
     if poly:
-        pd = " ".join(f"{'L' if i else 'M'} {tx(x):.1f} {ty(y):.1f}" for i, (x, y) in enumerate(poly))
-        shade = f'<path d="{pd} Z" fill="#b8d4f0" fill-opacity="0.85" stroke="#2c5f8a" stroke-width="1.2"/>'
-    else:
-        shade = ""
-
-    # grid
-    grid = []
-    for xi in range(math.ceil(x_min), math.floor(x_max) + 1):
-        grid.append(
-            f'<line x1="{tx(xi):.1f}" y1="{margin_t}" x2="{tx(xi):.1f}" y2="{margin_t+ph}" stroke="#e0e0e0" stroke-width="1"/>'
+        pd = " ".join(
+            f"{'L' if i else 'M'} {x:.4f} {y:.4f}" for i, (x, y) in enumerate(poly)
         )
-        if xi != 0:
-            grid.append(
-                f'<text x="{tx(xi):.1f}" y="{margin_t+ph+16}" text-anchor="middle" font-size="11" fill="#333">{xi}</text>'
-            )
-    for yi in range(math.ceil(y_min), math.floor(y_max) + 1):
-        grid.append(
-            f'<line x1="{margin_l}" y1="{ty(yi):.1f}" x2="{margin_l+pw}" y2="{ty(yi):.1f}" stroke="#e0e0e0" stroke-width="1"/>'
+        parts.append(
+            f'<path d="{pd} Z" fill="#b8d4f0" fill-opacity="0.82" '
+            f'stroke="#2c5f8a" stroke-width="{sw_region:.4f}"/>'
         )
-        if yi != 0:
-            grid.append(
-                f'<text x="{margin_l-8}" y="{ty(yi)+4:.1f}" text-anchor="end" font-size="11" fill="#333">{yi}</text>'
-            )
 
-    x0, x1 = cfg["x_range"]
-    curves = [
-        (cfg["lower_fns"][0], cfg["labels"][0], "#1a5fb4", 2.2),
-        (cfg["upper_fns"][0], cfg["labels"][1], "#c01c28", 2.2),
-        (cfg["line_fn"], cfg["labels"][2], "#26a269", 2.2),
+    # кривые
+    curve_defs = [
+        (cfg["lower_fns"][0], "#1a5fb4", cfg["labels"][0]),
+        (cfg["upper_fns"][0], "#c01c28", cfg["labels"][1]),
+        (cfg["line_fn"], "#26a269", cfg["labels"][2]),
     ]
-    curve_svg = []
-    for fn, label, color, sw in curves:
-        d = curve_path(fn, x0, x1)
+    label_positions = [
+        (x_min + vb_w * 0.05, None),
+        (x_max - vb_w * 0.28, None),
+        (x_max - vb_w * 0.32, None),
+    ]
+    for i, (fn, color, label) in enumerate(curve_defs):
+        d = curve_path(fn, x_min, x_max)
         if d:
-            curve_svg.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{sw}"/>')
+            parts.append(
+                f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{sw_curve:.4f}" '
+                f'stroke-linecap="round"/>'
+            )
+            lx = label_positions[i][0]
+            ly = fn(lx)
+            if y_min <= ly <= y_max:
+                parts.append(
+                    f'<text x="{lx:.4f}" y="{ly - vb_h * 0.04:.4f}" font-size="{fs_label:.4f}" '
+                    f'font-family="Times New Roman" fill="{color}">{label}</text>'
+                )
 
-    # legend
-    lx, ly = margin_l + 8, margin_t + 8
-    legend_items = [
-        ("#1a5fb4", cfg["labels"][0]),
-        ("#c01c28", cfg["labels"][1]),
-        ("#26a269", cfg["labels"][2]),
-    ]
-    legend = [f'<rect x="{margin_l}" y="{margin_t}" width="{pw}" height="58" fill="white" fill-opacity="0.92" stroke="#ccc"/>']
-    for i, (col, lab) in enumerate(legend_items):
-        yy = ly + i * 16
-        legend.append(f'<line x1="{lx}" y1="{yy}" x2="{lx+22}" y2="{yy}" stroke="{col}" stroke-width="2.5"/>')
-        legend.append(f'<text x="{lx+28}" y="{yy+4}" font-size="11" fill="#111">{lab}</text>')
-    legend.append(f'<text x="{lx}" y="{ly+52}" font-size="10" fill="#555">Закрашенная область</text>')
+    # оси
+    if x_min <= 0 <= x_max:
+        parts.append(
+            f'<line x1="0" y1="{y_min:.4f}" x2="0" y2="{y_max:.4f}" '
+            f'stroke="#888" stroke-width="{sw_axis:.4f}"/>'
+        )
+    if y_min <= 0 <= y_max:
+        parts.append(
+            f'<line x1="{x_min:.4f}" y1="0" x2="{x_max:.4f}" y2="0" '
+            f'stroke="#888" stroke-width="{sw_axis:.4f}"/>'
+        )
+    parts.append(
+        f'<line x1="{x_min:.4f}" y1="{y_max:.4f}" x2="{x_max:.4f}" y2="{y_max:.4f}" '
+        f'stroke="#000" stroke-width="{sw_axis:.4f}"/>'
+    )
+    parts.append(
+        f'<line x1="{x_min:.4f}" y1="{y_min:.4f}" x2="{x_min:.4f}" y2="{y_max:.4f}" '
+        f'stroke="#000" stroke-width="{sw_axis:.4f}"/>'
+    )
+    parts.append(
+        f'<text x="{x_max + vb_w * 0.03:.4f}" y="{y_max + vb_h * 0.02:.4f}" '
+        f'font-size="{fs_label:.4f}" font-style="italic" font-family="Times New Roman">x</text>'
+    )
+    parts.append(
+        f'<text x="{x_min - vb_w * 0.02:.4f}" y="{y_min - vb_h * 0.03:.4f}" '
+        f'font-size="{fs_label:.4f}" font-style="italic" font-family="Times New Roman">y</text>'
+    )
 
-    ox0, oy0 = tx(0), ty(0)
-    axes = f'''
-    <line x1="{margin_l}" y1="{margin_t+ph}" x2="{margin_l+pw}" y2="{margin_t+ph}" stroke="#000" stroke-width="1.5"/>
-    <line x1="{margin_l}" y1="{margin_t}" x2="{margin_l}" y2="{margin_t+ph}" stroke="#000" stroke-width="1.5"/>
-    <text x="{margin_l+pw+4}" y="{margin_t+ph+4}" font-size="12" font-style="italic">x</text>
-    <text x="{margin_l-6}" y="{margin_t-8}" font-size="12" font-style="italic">y</text>
-    <text x="{tx(0)+4}" y="{margin_t+ph+16}" font-size="11">0</text>
-    <text x="{margin_l-8}" y="{ty(0)+4}" text-anchor="end" font-size="11">0</text>
-    '''
+    # тестовые точки
+    for pt, col, mark in [(ty, "#1a7f37", "A"), (tn, "#b91c1c", "B")]:
+        if x_min <= pt[0] <= x_max and y_min <= pt[1] <= y_max:
+            parts.append(
+                f'<circle cx="{pt[0]:.4f}" cy="{pt[1]:.4f}" r="{r_pt:.4f}" fill="{col}" '
+                f'stroke="#fff" stroke-width="{sw_grid:.4f}"/>'
+            )
+            parts.append(
+                f'<text x="{pt[0] + r_pt * 1.5:.4f}" y="{pt[1] - r_pt * 1.2:.4f}" '
+                f'font-size="{fs_tick:.4f}" font-weight="bold" font-family="Times New Roman" '
+                f'fill="{col}">{mark}</text>'
+            )
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="График задания 7">
-  <rect width="100%" height="100%" fill="#fff"/>
-  {''.join(grid)}
-  {shade}
-  {''.join(curve_svg)}
-  {axes}
-  {''.join(legend)}
-</svg>'''
+    parts.append("</svg>")
+    return "\n".join(parts)
 
 
 REGION_CONFIGS = [
@@ -764,14 +834,19 @@ pre.code {
   font-family: "Courier New", monospace; font-size: 9.5pt;
   border: 1px solid #ccc; background: #f7f7f7; padding: 3mm 4mm;
   margin: 3mm 0; line-height: 1.3; overflow-x: auto;
+  text-align: left; white-space: pre; display: block; width: 100%;
 }
 table.examples { border-collapse: collapse; margin: 3mm auto; font-size: 11pt; }
 table.examples th, table.examples td { border: 1px solid #333; padding: 2mm 6mm; }
 table.examples th { background: #eef2f6; }
-.figure { text-align: center; margin: 4mm 0; page-break-inside: avoid; }
-.figure svg { max-width: 100%; height: auto; border: 1px solid #333; }
-.figure-caption { font-size: 10pt; margin-top: 2mm; font-style: italic; }
-.region-list { font-size: 10.5pt; margin: 2mm 0 2mm 6mm; }
+.figure { margin: 4mm 0; page-break-inside: avoid; }
+.figure-graph { text-align: center; }
+.figure-graph svg { max-width: 100%; height: auto; }
+.figure-code { text-align: left; }
+.figure-code pre.code { margin-left: 0; margin-right: 0; }
+.figure-caption { font-size: 10pt; margin-top: 2mm; font-style: italic; text-align: center; }
+.region-conditions { font-size: 10.5pt; margin: 2mm 0 3mm 6mm; line-height: 1.4; }
+.region-conditions p { margin: 1mm 0; }
 .page-break { page-break-before: always; }
 .footer { margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #ccc; font-size: 9pt; text-align: center; color: #666; }
 .no-print { text-align: center; font-family: sans-serif; font-size: 10pt; color: #666; margin-bottom: 4mm; }
@@ -879,7 +954,7 @@ def render_blank(v: dict) -> str:
     <div class="task-body">
       <p>Программа должна выводить <strong>{t6['desc']}</strong>. Найдите ошибки (рис. а).</p>
       <p>а) Укажите ошибки. б) Исправленные строки.</p>
-      <div class="figure"><pre class="code">{html_escape(t6['code'])}</pre><div class="figure-caption">Рис. а</div></div>
+      <div class="figure figure-code"><pre class="code">{html_escape(t6['code'])}</pre><div class="figure-caption">Рис. а</div></div>
       <p class="solution-label">Решение:</p><div class="solution-space medium"></div>
       <div class="answer-box xtall"></div>
     </div>
@@ -897,7 +972,9 @@ def render_blank(v: dict) -> str:
         <tr><td>{ty[0]} &nbsp; {ty[1]}</td><td>YES</td></tr>
         <tr><td>{tn[0]} &nbsp; {tn[1]}</td><td>NO</td></tr>
       </table>
-      <div class="figure">{v['t7_svg']}<div class="figure-caption">Рис. б — закрашенная область</div></div>
+      <p>Область задана неравенствами:</p>
+      <div class="region-conditions">{''.join(f'<p>{html_escape(d.replace("$", "").replace("\\ge", "≥").replace("\\le", "≤"))}</p>' for d in reg['desc'])}</div>
+      <div class="figure figure-graph">{v['t7_svg']}<div class="figure-caption">Рис. б — закрашенная область (A — YES, B — NO)</div></div>
     </div>
   </div>
 
