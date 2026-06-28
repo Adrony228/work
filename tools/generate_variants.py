@@ -493,6 +493,126 @@ TASK5 = [
     ("247", 54, 3, 4, 6374),
 ]
 
+# Варианты 5, 7, 9, 12, 15 — выражение из 3–4 действий (+, −, ·)
+T5_COMPLEX: dict[int, dict] = {
+    0: {
+        "lead_coeff": 2,
+        "ops": ["-", "+", "+"],
+        "terms": [("41x", ("x", 63)), ("2x5", ("x", 63)), ("x3", ("x", 63)), ("2", ("x", 63))],
+    },
+    2: {
+        "lead_coeff": 3,
+        "ops": ["+", "-", "-"],
+        "terms": [("41x", ("x", 63)), ("2x5", ("x", 63)), ("x3", ("x", 63)), ("2", ("x", 63))],
+    },
+    4: {
+        "lead_coeff": 1,
+        "ops": ["-", "+", "+"],
+        "terms": [("46x", ("x", 87)), ("1x3", ("x", 87)), ("x7", ("x", 87)), ("2", ("x", 87))],
+    },
+    7: {
+        "lead_coeff": 2,
+        "ops": ["+", "-", "-"],
+        "terms": [("46x", ("x", 65)), ("1x3", ("x", 65)), ("x7", ("x", 65)), ("2", ("x", 65))],
+    },
+    10: {
+        "lead_coeff": 1,
+        "ops": ["+", "-", "-"],
+        "terms": [("41x", ("x", 81)), ("2x5", ("x", 81)), ("x3", ("x", 81)), ("2", ("x", 81))],
+    },
+}
+
+
+def _t5_eval_num(digits: str, base, x: int) -> int:
+    if isinstance(base, tuple):
+        b = 10 * x + base[1]
+    else:
+        b = base
+    val = 0
+    for ch in digits:
+        d = x if ch == "x" else int(ch)
+        if d < 0 or d >= b:
+            raise ValueError("invalid digit")
+        val = val * b + d
+    return val
+
+
+def _t5_eval_complex(spec: dict, x: int) -> int:
+    vals = [_t5_eval_num(d, b, x) for d, b in spec["terms"]]
+    v = spec["lead_coeff"] * vals[0]
+    for op, t in zip(spec["ops"], vals[1:]):
+        if op == "+":
+            v += t
+        elif op == "-":
+            v -= t
+        elif op == "*":
+            v *= t
+    return v
+
+
+def _t5_solve_complex(spec: dict) -> tuple[int, int]:
+    for x in range(9, -1, -1):
+        try:
+            v = _t5_eval_complex(spec, x)
+            if v > 0 and v % 99 == 0:
+                return x, v // 99
+        except ValueError:
+            pass
+    raise ValueError(f"no valid x for task5 complex {spec}")
+
+
+def _t5_num_html(digits: str, base) -> str:
+    sub = f"x{base[1]}" if isinstance(base, tuple) else str(base)
+    body = re.sub(r"x", "<em>x</em>", digits, count=1)
+    return f"{body}<sub>{sub}</sub>"
+
+
+def _t5_num_tex(digits: str, base) -> str:
+    sub = f"x{base[1]}" if isinstance(base, tuple) else str(base)
+    return f"{digits}_{{{sub}}}"
+
+
+def build_task5(i: int) -> dict:
+    if i in T5_COMPLEX:
+        spec = T5_COMPLEX[i]
+        x5, q5 = _t5_solve_complex(spec)
+        op_sym = {"+": "+", "-": "−", "*": "·"}
+        html_parts: list[str] = []
+        tex_parts: list[str] = []
+        lead = spec["lead_coeff"]
+        d0, b0 = spec["terms"][0]
+        first_html = _t5_num_html(d0, b0)
+        first_tex = _t5_num_tex(d0, b0)
+        if lead != 1:
+            html_parts.append(f"{lead} · {first_html}")
+            tex_parts.append(f"{lead} \\cdot {first_tex}")
+        else:
+            html_parts.append(first_html)
+            tex_parts.append(first_tex)
+        for op, (digits, base) in zip(spec["ops"], spec["terms"][1:]):
+            sym = op_sym[op]
+            html_parts.append(f" {sym} {_t5_num_html(digits, base)}")
+            tex_parts.append(f" {op} {_t5_num_tex(digits, base)}")
+        return {
+            "complex": True,
+            "html": "".join(html_parts),
+            "tex": "".join(tex_parts),
+            "x5": x5,
+            "q5": q5,
+            "n_ops": len(spec["ops"]) + (1 if lead != 1 else 0),
+        }
+    d5, suf, last, x5, q5 = TASK5[i]
+    return {
+        "complex": False,
+        "d5": d5,
+        "suf": suf,
+        "last": last,
+        "html": f"{d5}<sub>x{suf}</sub> + 1x{last}<sub>100</sub>",
+        "tex": f"{d5}_{{x{suf}}}+1x{last}_{{100}}",
+        "x5": x5,
+        "q5": q5,
+    }
+
 TASK6 = [
     {
         "desc": "наименьшую сумму двух соседних цифр",
@@ -970,7 +1090,7 @@ def build_variant(num: int) -> dict:
         p2t, k3t, p0, k0 = 875, 525, 1310, 111
     if p0 == p2t and fp == sp.Rational(1, 6):
         p2t, k3t, p0, k0 = 770, 560, 440, 939
-    d5, suf, last, x5, q5 = TASK5[i]
+    t5 = build_task5(i)
     t6 = TASK6[i]
     reg = REGION_CONFIGS[i]
     t8 = build_task8(TASK8_SPECS[i])
@@ -993,7 +1113,7 @@ def build_variant(num: int) -> dict:
         "t3_text": t3_text,
         "t3_ans": t3_ans,
         "t4": (n1, n2, item, ef1, ef2, p2t, k3t, p0, k0),
-        "t5": (d5, suf, last, x5, q5),
+        "t5": t5,
         "t6": t6,
         "t7": reg,
         "t7_svg": make_svg(reg),
@@ -1190,7 +1310,7 @@ def html_escape(s: str) -> str:
 def render_blank(v: dict) -> str:
     n = v["num"]
     n1, n2, item, ef1, ef2, p2t, k3t, p0, k0 = v["t4"]
-    d5, suf, last, x5, q5 = v["t5"]
+    t5 = v["t5"]
     reg = v["t7"]
     ty, tn = reg["test_yes"], reg["test_no"]
     t6 = v["t6"]
@@ -1270,7 +1390,7 @@ def render_blank(v: dict) -> str:
   <div class="task">
     <div class="task-head"><span class="task-num">Задание 5</span><span class="task-pts">(10 баллов)</span></div>
     <div class="task-body">
-      <p>В выражении {d5}<sub>x{suf}</sub> + 1x{last}<sub>100</sub> (<em>x</em> — цифра):</p>
+      <p>В выражении {t5['html']} (<em>x</em> — цифра):</p>
       <p>а) наибольшее <em>x</em>, при котором значение кратно 99;<br>
       б) частное при этом <em>x</em>. <em>Ответ в десятичной системе.</em></p>
       <p class="solution-label">Решение:</p><div class="solution-space medium"></div>
@@ -1342,7 +1462,7 @@ def render_blank(v: dict) -> str:
 def render_md(v: dict) -> str:
     n = v["num"]
     n1, n2, item, ef1, ef2, p2t, k3t, p0, k0 = v["t4"]
-    d5, suf, last, x5, q5 = v["t5"]
+    t5 = v["t5"]
     reg = v["t7"]
     ty, tn = reg["test_yes"], reg["test_no"]
     t6, t8 = v["t6"], v["t8"]
@@ -1382,7 +1502,7 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 
 ## Задание 5 (10 баллов)
 
-В выражении ${d5}_{{x{suf}}}+1x{last}_{{100}}$:
+В выражении ${t5['tex']}$:
 
 а) наибольшее $x$ при кратности 99; б) частное. *Ответ в десятичной системе.*
 
@@ -1425,8 +1545,8 @@ $$\\sqrt{{{v['t2_a']}(x+1)^2-1}}>\\sqrt{{{v['t2_a']}-(x-1)^2}}$$
 | 2 | ${v['t2_ans']}$ |
 | 3 | {v['t3_ans']} |
 | 4 | {n1} — ${p0}$, {n2} — ${k0}$ |
-| 5а | ${x5}$ |
-| 5б | ${q5}$ |
+| 5а | ${t5['x5']}$ |
+| 5б | ${t5['q5']}$ |
 | 6 | {t6['errors']} |
 | 7 | см. условия выше |
 | 8 | {task8_answer_row(t8)} |
@@ -1450,7 +1570,7 @@ def main():
     lines = ["# Ключ ответов (варианты 5–16)\n", "| Вар. | 1 | 2 | 3 | 4 | 5а | 5б | 8 |", "|------|---|---|---|---|----|----|---|"]
     for v in variants:
         n1, n2, _, _, _, _, _, p0, k0 = v["t4"]
-        x5, q5 = v["t5"][3], v["t5"][4]
+        x5, q5 = v["t5"]["x5"], v["t5"]["q5"]
         lines.append(
             f"| {v['num']} | {v['t1_ans']} | {v['t2_ans']} | {v['t3_ans'].replace('$','')} | {p0}/{k0} | {x5} | {q5} | {task8_answer_key_cell(v['t8'])} |"
         )
