@@ -59,59 +59,19 @@ def _combined_x_intervals(cfg: dict, n: int = 2000) -> list[tuple[float, float]]
     return intervals
 
 
-def _scan_intervals(predicate, x_lo: float, x_hi: float, n: int = 5000) -> list[tuple[float, float]]:
-    intervals: list[tuple[float, float]] = []
-    start: float | None = None
-    step = (x_hi - x_lo) / n if x_hi > x_lo else 0
-    x = x_lo
-    while x <= x_hi + 1e-9:
-        if predicate(x):
-            if start is None:
-                start = x
-        elif start is not None:
-            intervals.append((start, x - step))
-            start = None
-        x += step
-    if start is not None:
-        intervals.append((start, x_hi))
-    return intervals
-
-
-def _intersect_intervals(
-    a_list: list[tuple[float, float]],
-    b_list: list[tuple[float, float]],
-) -> list[tuple[float, float]]:
-    result: list[tuple[float, float]] = []
-    for a0, a1 in a_list:
-        for b0, b1 in b_list:
-            lo, hi = max(a0, b0), min(a1, b1)
-            if lo <= hi + 1e-9:
-                result.append((lo, hi))
-    return result
-
-
-def _clip_intervals(
-    intervals: list[tuple[float, float]],
-    clip: list[tuple[float, float]],
-    min_width: float = 0.08,
-) -> list[tuple[float, float]]:
-    clipped: list[tuple[float, float]] = []
-    for a0, a1 in intervals:
-        for c0, c1 in clip:
-            lo, hi = max(a0, c0), min(a1, c1)
-            if hi - lo >= min_width:
-                clipped.append((lo, hi))
-    return clipped
-
-
 def _crossing_x(f, g, x_lo: float, x_hi: float, n: int = 8000) -> list[float]:
     pts: list[float] = []
     step = (x_hi - x_lo) / n if x_hi > x_lo else 0
     x = x_lo
     prev = f(x) - g(x)
+    tol = 1e-8
+    if abs(prev) <= tol:
+        pts.append(x)
     while x <= x_hi + 1e-9:
         cur = f(x) - g(x)
-        if prev * cur < 0:
+        if abs(cur) <= tol:
+            pts.append(x)
+        elif prev * cur < 0:
             a, b = x - step, x
             for _ in range(50):
                 m = (a + b) / 2
@@ -122,20 +82,40 @@ def _crossing_x(f, g, x_lo: float, x_hi: float, n: int = 8000) -> list[float]:
             pts.append((a + b) / 2)
         prev = cur
         x += step
-    return pts
+    return _unique_sorted(pts)
 
 
-def _split_interval(x0: float, x1: float, cuts: list[float]) -> list[tuple[float, float]]:
-    pts = [x0] + sorted(c for c in cuts if x0 + 1e-9 < c < x1 - 1e-9) + [x1]
-    return [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+def _unique_sorted(xs: list[float], eps: float = 1e-4) -> list[float]:
+    xs = sorted(xs)
+    out: list[float] = []
+    for x in xs:
+        if not out or abs(x - out[-1]) > eps:
+            out.append(x)
+    return out
 
 
-def _pick_mid(fn) -> float:
-    return fn
+def _interval_overlap(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return max(0.0, min(a[1], b[1]) - max(a[0], b[0]))
+
+
+def _interval_area(lower_fn, upper_fn, x0: float, x1: float, n: int = 120) -> float:
+    if x1 <= x0:
+        return 0.0
+    step = (x1 - x0) / n
+    area = 0.0
+    x = x0
+    prev = max(0.0, upper_fn(x) - lower_fn(x))
+    for _ in range(n):
+        x_next = x + step
+        cur = max(0.0, upper_fn(x_next) - lower_fn(x_next))
+        area += (prev + cur) * 0.5 * step
+        x = x_next
+        prev = cur
+    return area
 
 
 def compute_regions(cfg: dict) -> list[dict]:
-    """Подобласти между парами кривых; граница — линия пересечения функций."""
+    """Подобласти между парами функций (без вертикального разреза по x)."""
     if cfg.get("regions"):
         return cfg["regions"]
 
@@ -143,48 +123,95 @@ def compute_regions(cfg: dict) -> list[dict]:
     if not combined:
         return []
 
-    cx0, cx1 = max(combined, key=lambda iv: iv[1] - iv[0])
-    scan_lo, scan_hi = cx0 - 0.1, cx1 + 0.1
-    lowers, uppers = cfg["lower_fns"], cfg["upper_fns"]
-    regions: list[dict] = []
+    scan_lo = cfg["plot_x"][0] - 1.0
+    scan_hi = cfg["plot_x"][1] + 1.0
 
-    if len(lowers) == 1 and len(uppers) >= 2:
-        cuts: list[float] = []
-        for i in range(len(uppers)):
-            for j in range(i + 1, len(uppers)):
-                cuts.extend(_crossing_x(uppers[i], uppers[j], scan_lo, scan_hi))
-        for x0, x1 in _clip_intervals(_split_interval(cx0, cx1, cuts), combined):
-            mid = (x0 + x1) / 2
-            ui = min(
-                range(len(uppers)),
-                key=lambda i: uppers[i](mid),
-            )
-            if lowers[0](mid) <= uppers[ui](mid) + 1e-9:
-                regions.append({"lower": [0], "upper": [ui], "x_range": (x0, x1)})
+    curves = []
+    for fn in cfg["lower_fns"] + cfg["upper_fns"]:
+        if all(id(fn) != id(existing) for existing in curves):
+            curves.append(fn)
 
-    elif len(lowers) >= 2 and len(uppers) == 1:
-        cuts = []
-        for i in range(len(lowers)):
-            for j in range(i + 1, len(lowers)):
-                cuts.extend(_crossing_x(lowers[i], lowers[j], scan_lo, scan_hi))
-        for x0, x1 in _clip_intervals(_split_interval(cx0, cx1, cuts), combined):
-            mid = (x0 + x1) / 2
-            li = max(
-                range(len(lowers)),
-                key=lambda i: lowers[i](mid),
-            )
-            if lowers[li](mid) <= uppers[0](mid) + 1e-9:
-                regions.append({"lower": [li], "upper": [0], "x_range": (x0, x1)})
+    candidates: list[dict] = []
+    for i in range(len(curves)):
+        for j in range(i + 1, len(curves)):
+            cuts = _crossing_x(curves[i], curves[j], scan_lo, scan_hi)
+            if len(cuts) < 2:
+                continue
+            for k in range(len(cuts) - 1):
+                x0, x1 = cuts[k], cuts[k + 1]
+                if x1 - x0 < 0.12:
+                    continue
+                mid = (x0 + x1) / 2
+                if curves[i](mid) <= curves[j](mid):
+                    lo_fn, hi_fn = curves[i], curves[j]
+                else:
+                    lo_fn, hi_fn = curves[j], curves[i]
+                area = _interval_area(lo_fn, hi_fn, x0, x1)
+                if area > 0.08:
+                    candidates.append(
+                        {
+                            "lower_fn": lo_fn,
+                            "upper_fn": hi_fn,
+                            "x_range": (x0, x1),
+                            "_area": area,
+                        }
+                    )
 
-    else:
-        regions.append({"x_range": (cx0, cx1)})
+    if not candidates:
+        cx0 = min(iv[0] for iv in combined)
+        cx1 = max(iv[1] for iv in combined)
+        return [{"x_range": (cx0, cx1)}]
 
-    return regions
+    ty = cfg["test_yes"]
+    tn = cfg["test_no"]
+
+    def contains(cand: dict, pt: tuple[float, float]) -> bool:
+        x, y = pt
+        x0, x1 = cand["x_range"]
+        if not (x0 - 1e-9 <= x <= x1 + 1e-9):
+            return False
+        lo, hi = cand["lower_fn"](x), cand["upper_fn"](x)
+        return lo - 1e-9 <= y <= hi + 1e-9
+
+    def rank_key(cand: dict) -> tuple[int, int, float]:
+        return (
+            1 if contains(cand, ty) else 0,
+            1 if not contains(cand, tn) else 0,
+            cand["_area"],
+        )
+
+    # Берём 2–3 крупнейшие (с приоритетом A внутри и B снаружи).
+    selected: list[dict] = []
+    for cand in sorted(candidates, key=rank_key, reverse=True):
+        xr = cand["x_range"]
+        if any(_interval_overlap(xr, s["x_range"]) > 0.55 for s in selected):
+            continue
+        selected.append(cand)
+        if len(selected) == 3:
+            break
+
+    if len(selected) < 2:
+        for cand in sorted(candidates, key=rank_key, reverse=True):
+            if cand in selected:
+                continue
+            selected.append(cand)
+            if len(selected) == 2:
+                break
+
+    for r in selected:
+        r.pop("_area", None)
+    return selected
 
 
 def in_region(x: float, y: float, cfg: dict) -> bool:
     lo, hi = _region_bounds(x, cfg)
     return lo - 1e-9 <= y <= hi + 1e-9
+
+
+def _sub_bounds(x: float, cfg: dict, sub: dict | None) -> tuple[float, float]:
+    if sub and "lower_fn" in sub and "upper_fn" in sub:
+        return sub["lower_fn"](x), sub["upper_fn"](x)
+    return _region_bounds(x, cfg, sub)
 
 
 def find_region_polygon(cfg: dict, sub: dict | None = None, n: int = 400) -> list[tuple[float, float]]:
@@ -196,14 +223,14 @@ def find_region_polygon(cfg: dict, sub: dict | None = None, n: int = 400) -> lis
     x = x_lo
     step = (x_hi - x_lo) / n if x_hi > x_lo else 0
     while x <= x_hi + 1e-9:
-        lo, hi = _region_bounds(x, cfg, sub)
+        lo, hi = _sub_bounds(x, cfg, sub)
         if lo <= hi + 1e-9:
             xs.append(x)
         x += step
     if not xs:
         return []
-    upper_pts = [(x, _region_bounds(x, cfg, sub)[1]) for x in xs]
-    lower_pts = [(x, _region_bounds(x, cfg, sub)[0]) for x in reversed(xs)]
+    upper_pts = [(x, _sub_bounds(x, cfg, sub)[1]) for x in xs]
+    lower_pts = [(x, _sub_bounds(x, cfg, sub)[0]) for x in reversed(xs)]
     return upper_pts + lower_pts
 
 
@@ -397,7 +424,7 @@ REGION_CONFIGS = [
         "line_fn": lambda x: 3 - 2 * x,
         "labels": ["y = x² − 4", "y = 5 − x²", "y = 3 − 2x"],
         "x_range": (-2.2, 2.0), "plot_x": (-3, 3), "plot_y": (-4, 5),
-        "test_yes": (-1, 2), "test_no": (1.5, 1.5),
+        "test_yes": (-1, 2), "test_no": (2.5, 1.5),
     },
     {
         "lower_fns": [lambda x: x**2 - 3],
@@ -405,7 +432,7 @@ REGION_CONFIGS = [
         "line_fn": lambda x: 2 - x,
         "labels": ["y = x² − 3", "y = 4 − x²", "y = 2 − x"],
         "x_range": (-1.9, 1.85), "plot_x": (-3, 3), "plot_y": (-4, 5),
-        "test_yes": (-1.5, 1.5), "test_no": (1.5, 1.5),
+        "test_yes": (-1.5, 1.5), "test_no": (2.2, 1.5),
     },
     {
         "lower_fns": [lambda x: -x**2 + 1, lambda x: x - 2],
@@ -477,7 +504,7 @@ REGION_CONFIGS = [
         "line_fn": lambda x: 1 - 2 * x,
         "labels": ["y = x² − 4", "y = 4 − x²", "y = 1 − 2x"],
         "x_range": (-1.9, 1.5), "plot_x": (-3, 3), "plot_y": (-5, 5),
-        "test_yes": (-1, 0), "test_no": (1.5, 1.5),
+        "test_yes": (-1, 0), "test_no": (2.5, 1.5),
     },
     {
         "lower_fns": [lambda x: -x**2 + 3, lambda x: x + 1],
